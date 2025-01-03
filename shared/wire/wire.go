@@ -23,13 +23,16 @@ var ApplicationSet = wire.NewSet(
 	env.LoadConfig,
 	ProvideLogger,
 	ProvideApplication,
-	ProvideMessageHandlers,
+	ProvideStreamForgeMessageProcessor,
 	ProvideMessageBroker,
+	ProvideHandlerConfigs,
+	ProvidePhotoService,
+	ProvideProfileService,
 )
 
 func InitializeApp() (Application, error) {
 	wire.Build(
-		//DatabaseSet,
+		DatabaseSet,
 		ApplicationSet,
 		LifecycleSet,
 	)

@@ -5,7 +5,6 @@ import (
 	"eden/shared/broker/interfaces"
 	loggerIntf "eden/shared/logger/interfaces"
 	"errors"
-	"fmt"
 	"go.uber.org/zap"
 )
 
@@ -15,9 +14,9 @@ var (
 
 // ConsumerHook - Хук для управления консьюмерами RabbitMQ
 type ConsumerHook struct {
-	MessageHandlers []interfaces.MessageHandler
-	Logger          loggerIntf.Logger
-	Broker          interfaces.MessageBroker
+	HandlerConfigs []HandlerConfig
+	Logger         loggerIntf.Logger
+	Broker         interfaces.MessageBroker
 }
 
 // Setup выполняет инициализацию хуков (пока без реализации)
@@ -27,10 +26,8 @@ func (c *ConsumerHook) Setup(ctx context.Context) error {
 
 // Start запускает консьюмеров
 func (c *ConsumerHook) Start(ctx context.Context) error {
-	// Для каждого обработчика создаем подписку на топик
-	for _, handler := range c.MessageHandlers {
-		topic := fmt.Sprintf("topic_for_handler_%T", handler) // Пример генерации топика
-		if err := c.Broker.Subscribe(ctx, "exchangeName", topic, handler); err != nil {
+	for _, cfg := range c.HandlerConfigs {
+		if err := c.Broker.Subscribe(ctx, cfg.ExchangeName, cfg.QueueName, cfg.Handler); err != nil {
 			c.Logger.Error("Failed to subscribe", zap.Error(err))
 			return err
 		}
@@ -51,10 +48,10 @@ func (c *ConsumerHook) Shutdown(ctx context.Context) error {
 }
 
 // NewConsumerHook конструирует ConsumerHook
-func NewConsumerHook(handlers []interfaces.MessageHandler, logger loggerIntf.Logger, broker interfaces.MessageBroker) *ConsumerHook {
+func NewConsumerHook(handlerCfgs []HandlerConfig, logger loggerIntf.Logger, broker interfaces.MessageBroker) *ConsumerHook {
 	return &ConsumerHook{
-		MessageHandlers: handlers,
-		Logger:          logger,
-		Broker:          broker,
+		HandlerConfigs: handlerCfgs,
+		Logger:         logger,
+		Broker:         broker,
 	}
 }

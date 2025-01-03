@@ -65,7 +65,7 @@ func (s *watermillSubscriber) Subscribe(ctx context.Context, exchangeName, topic
 
 				// Обрабатываем сообщение
 				go func(m *message.Message) {
-					ack, err := handler.Handle(ctx, m)
+					ack, err := handler.Handle(ctx, m.Payload)
 					if err != nil {
 						s.logger.Error("Error processing message", err, watermill.LogFields{
 							"message_id": m.UUID,
