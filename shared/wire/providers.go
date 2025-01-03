@@ -2,11 +2,12 @@ package wire
 
 import (
 	"eden/config/env"
-	"eden/modules/profile/application/consumer"
+	consumerIntf "eden/modules/profile/application/consumer/interfaces"
+	"eden/modules/profile/application/service"
 	profileRepoIntf "eden/modules/profile/domain/interfaces"
 	"eden/modules/profile/infrastructure/queue"
 	profileRepo "eden/modules/profile/infrastructure/repository"
-	broker2 "eden/shared/broker"
+	"eden/shared/broker"
 	brokerIntf "eden/shared/broker/interfaces"
 	"eden/shared/database"
 	lifecycleIntf "eden/shared/lifecycle/interfaces"
@@ -16,9 +17,25 @@ import (
 	"gorm.io/gorm"
 )
 
-func ProvideLifecycleHooks(handlers []brokerIntf.MessageHandler, logger loggerIntf.Logger, broker brokerIntf.MessageBroker) []lifecycleIntf.Hook {
+func ProvideProfileService(repo profileRepoIntf.ProfileRepository) consumerIntf.ProfileService {
+	return service.NewProfileService(repo)
+}
+
+func ProvidePhotoService(repo profileRepoIntf.PhotoRepository) consumerIntf.PhotoService {
+	return service.NewPhotoService(repo)
+}
+
+func ProvideStreamForgeMessageProcessor(profileSrv consumerIntf.ProfileService, photoService consumerIntf.PhotoService) consumerIntf.StreamForgeMessageProcessor {
+	return service.NewStreamForgeMessageProcessor(profileSrv, photoService)
+}
+
+func ProvideHandlerConfigs(cfg *env.Config, sfMessageProcessor consumerIntf.StreamForgeMessageProcessor) []queue.HandlerConfig {
+	return queue.BuildHandlerConfigs(cfg, sfMessageProcessor)
+}
+
+func ProvideLifecycleHooks(handlerCfgs []queue.HandlerConfig, logger loggerIntf.Logger, broker brokerIntf.MessageBroker) []lifecycleIntf.Hook {
 	return []lifecycleIntf.Hook{
-		queue.NewConsumerHook(handlers, logger, broker),
+		queue.NewConsumerHook(handlerCfgs, logger, broker),
 	}
 }
 
@@ -42,27 +59,21 @@ func ProvideMessageBroker(cfg *env.Config, baseLogger loggerIntf.Logger) brokerI
 	logAdapter := logger.NewZapLoggerAdapter(baseLogger)
 
 	pubFactory := func(conn *amqp.ConnectionWrapper) (brokerIntf.Publisher, error) {
-		return broker2.NewPublisher(conn, logAdapter)
+		return broker.NewPublisher(conn, logAdapter)
 	}
 
 	subFactory := func(conn *amqp.ConnectionWrapper) (brokerIntf.Subscriber, error) {
-		return broker2.NewSubscriber(conn, logAdapter)
+		return broker.NewSubscriber(conn, logAdapter)
 	}
 
-	connFactory := broker2.NewConnFactory(amqp.ConnectionConfig{
+	connFactory := broker.NewConnFactory(amqp.ConnectionConfig{
 		AmqpURI: cfg.RabbitMQURL,
 	}, logAdapter)
 
-	return broker2.NewMessageBroker(broker2.Config{
+	return broker.NewMessageBroker(broker.Config{
 		PublisherFactory:  pubFactory,
 		SubscriberFactory: subFactory,
 		Logger:            logAdapter,
 		ConnFactory:       connFactory,
 	})
-}
-
-func ProvideMessageHandlers() []brokerIntf.MessageHandler {
-	return []brokerIntf.MessageHandler{
-		consumer.NewStreamForgeMessageHandler(),
-	}
 }

@@ -45,7 +45,7 @@ func main() {
 
 	// Завершаем работу всех сервисов
 	app.Logger.Info("Shutting down application")
-	close(stopCh) // Отправляем сигнал на завершение работы воркеров и консьюмеров
+	close(stopCh)
 
-	app.Logger.Info("All workers stopped gracefully")
+	app.Logger.Info("Application stopped gracefully")
 }

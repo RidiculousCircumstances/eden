@@ -3,6 +3,7 @@ package broker
 import (
 	"context"
 	"eden/shared/broker/interfaces"
+	"encoding/json"
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill-amqp/v2/pkg/amqp"
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -65,7 +66,7 @@ func (s *watermillSubscriber) Subscribe(ctx context.Context, exchangeName, topic
 
 				// Обрабатываем сообщение
 				go func(m *message.Message) {
-					ack, err := handler.Handle(ctx, m)
+					ack, err := handler.Handle(ctx, unwrapPayload(m.Payload))
 					if err != nil {
 						s.logger.Error("Error processing message", err, watermill.LogFields{
 							"message_id": m.UUID,
@@ -87,4 +88,34 @@ func (s *watermillSubscriber) Subscribe(ctx context.Context, exchangeName, topic
 
 func (s *watermillSubscriber) Close() error {
 	return s.connection.Close() // Закрываем общее подключение
+}
+
+func unwrapPayload(payload message.Payload) []byte {
+	var decodedPayload map[string]interface{}
+
+	// Пробуем распарсить Payload как JSON
+	err := json.Unmarshal(payload, &decodedPayload)
+	if err != nil {
+		// Если не удалось распарсить, возвращаем оригинальные данные
+		return payload
+	}
+
+	// Проверяем наличие ключа Payload
+	if value, exists := decodedPayload["Payload"]; exists {
+		// Если это строка, возвращаем как массив байт
+		if strValue, ok := value.(string); ok {
+			return []byte(strValue)
+		}
+
+		// Если это объект, сериализуем его в JSON и возвращаем как массив байт
+		if objValue, ok := value.(map[string]interface{}); ok {
+			// Сериализуем объект в JSON
+			serializedObj, err := json.Marshal(objValue)
+			if err == nil {
+				return serializedObj
+			}
+		}
+	}
+
+	return payload
 }

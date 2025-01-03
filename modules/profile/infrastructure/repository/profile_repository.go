@@ -4,7 +4,6 @@ import (
 	"context"
 	"eden/modules/profile/domain"
 	"eden/modules/profile/domain/interfaces"
-	"errors"
 	"gorm.io/gorm"
 )
 
@@ -24,11 +23,20 @@ func (r *profileRepository) Create(ctx context.Context, profile *domain.Profile)
 
 func (r *profileRepository) GetByID(ctx context.Context, id uint) (*domain.Profile, error) {
 	var profile domain.Profile
-	err := r.db.WithContext(ctx).Preload("Photos").First(&profile, id).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil // Если профиль не найден, возвращаем nil
+	// Используем Find, чтобы избежать ошибки в случае отсутствия записи
+	result := r.db.WithContext(ctx).Find(&profile, id)
+
+	if result.Error != nil {
+		// Если ошибка не связана с отсутствием записи, возвращаем ошибку
+		return nil, result.Error
 	}
-	return &profile, err
+
+	// Если профиль не найден (record not found), просто возвращаем nil без ошибки
+	if result.RowsAffected == 0 {
+		return nil, nil
+	}
+
+	return &profile, nil
 }
 
 func (r *profileRepository) Update(ctx context.Context, profile *domain.Profile) error {
