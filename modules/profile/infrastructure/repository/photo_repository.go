@@ -31,6 +31,29 @@ func (r *photoRepository) GetByID(ctx context.Context, id uint) (*domain.Photo, 
 	return &photo, err
 }
 
+func (r *photoRepository) ExistsByIndexID(ctx context.Context, id uint) (bool, error) {
+	var count int64
+	if err := r.db.WithContext(ctx).Model(&domain.Photo{}).Where("index_id = ?", id).Count(&count).Error; err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+func (r *photoRepository) GetIDByIndexID(ctx context.Context, indexID uint32) (uint, error) {
+	var id uint
+	err := r.db.WithContext(ctx).
+		Model(&domain.Photo{}).
+		Where("index_id = ?", indexID).
+		Pluck("id", &id).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return 0, nil // Если запись не найдена, возвращаем 0
+	}
+	if err != nil {
+		return 0, err // Возвращаем ошибку в случае других проблем
+	}
+	return id, nil
+}
+
 func (r *photoRepository) GetByProfileID(ctx context.Context, profileID uint) ([]domain.Photo, error) {
 	var photos []domain.Photo
 	err := r.db.WithContext(ctx).Where("profile_id = ?", profileID).Find(&photos).Error

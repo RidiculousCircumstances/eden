@@ -22,7 +22,7 @@ func InitGormDB(dsn string) *gorm.DB {
 	}
 
 	// Выполнение миграции схемы базы данных
-	err = db.AutoMigrate(&profDomain.Profile{}, &profDomain.Photo{})
+	err = db.AutoMigrate(&profDomain.Profile{}, &profDomain.Photo{}, &profDomain.Face{})
 	if err != nil {
 		log.Fatalf("%v: %v", ErrDBMigrationFailed, err)
 	}

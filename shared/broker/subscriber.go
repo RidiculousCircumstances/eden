@@ -7,6 +7,7 @@ import (
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill-amqp/v2/pkg/amqp"
 	"github.com/ThreeDotsLabs/watermill/message"
+	"time"
 )
 
 type watermillSubscriber struct {
@@ -77,6 +78,7 @@ func (s *watermillSubscriber) Subscribe(ctx context.Context, exchangeName, topic
 						m.Ack()
 					} else {
 						m.Nack()
+						time.Sleep(5 * time.Second)
 					}
 				}(msg)
 			}

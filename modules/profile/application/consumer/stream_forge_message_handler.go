@@ -11,7 +11,6 @@ import (
 )
 
 var (
-	ErrInvalidMessageType   = errors.New("invalid message type: expected []byte")
 	ErrBase64DecodingFailed = errors.New("failed to decode Base64 payload")
 	ErrJSONUnmarshalFailed  = errors.New("failed to unmarshal JSON payload")
 )

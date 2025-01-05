@@ -16,8 +16,8 @@ type Photo struct {
 }
 
 type TraceFaceMessage struct {
-	PhotoId int32 `json:"photo_id"`
-	Faces   []Face
+	PhotoId uint32 `json:"photo_id"`
+	Faces   []Face `json:"faces_info"`
 }
 
 type Face struct {

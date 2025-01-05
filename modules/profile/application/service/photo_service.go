@@ -19,6 +19,10 @@ func (s *photoService) CreatePhoto(ctx context.Context, photo *domain.Photo) err
 	return s.repo.Create(ctx, photo)
 }
 
+func (s *photoService) GetPhotoIdByIndexId(ctx context.Context, indexId uint32) (uint, error) {
+	return s.repo.GetIDByIndexID(ctx, indexId)
+}
+
 func (s *photoService) GetPhotosByProfileID(ctx context.Context, profileID uint) ([]domain.Photo, error) {
 	return s.repo.GetByProfileID(ctx, profileID)
 }

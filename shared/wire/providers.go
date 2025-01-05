@@ -25,12 +25,24 @@ func ProvidePhotoService(repo profileRepoIntf.PhotoRepository) consumerIntf.Phot
 	return service.NewPhotoService(repo)
 }
 
+func ProvideFaceService(repo profileRepoIntf.FaceRepository) consumerIntf.FaceService {
+	return service.NewFaceService(repo)
+}
+
 func ProvideStreamForgeMessageProcessor(profileSrv consumerIntf.ProfileService, photoService consumerIntf.PhotoService) consumerIntf.StreamForgeMessageProcessor {
 	return service.NewStreamForgeMessageProcessor(profileSrv, photoService)
 }
 
-func ProvideHandlerConfigs(cfg *env.Config, sfMessageProcessor consumerIntf.StreamForgeMessageProcessor) []queue.HandlerConfig {
-	return queue.BuildHandlerConfigs(cfg, sfMessageProcessor)
+func ProvideTraceFaceMessageProcessor(faceService consumerIntf.FaceService, photoService consumerIntf.PhotoService) consumerIntf.TraceFaceMessageProcessor {
+	return service.NewTraceFaceMessageProcessor(faceService, photoService)
+}
+
+func ProvideHandlerConfigs(
+	cfg *env.Config,
+	sfMessageProcessor consumerIntf.StreamForgeMessageProcessor,
+	tfMessageProcessor consumerIntf.TraceFaceMessageProcessor,
+) []queue.HandlerConfig {
+	return queue.BuildHandlerConfigs(cfg, sfMessageProcessor, tfMessageProcessor)
 }
 
 func ProvideLifecycleHooks(handlerCfgs []queue.HandlerConfig, logger loggerIntf.Logger, broker brokerIntf.MessageBroker) []lifecycleIntf.Hook {
@@ -53,6 +65,10 @@ func ProvidePhotoRepository(db *gorm.DB) profileRepoIntf.PhotoRepository {
 
 func ProvideProfileRepository(db *gorm.DB) profileRepoIntf.ProfileRepository {
 	return profileRepo.NewProfileRepository(db)
+}
+
+func ProvideFaceRepository(db *gorm.DB) profileRepoIntf.FaceRepository {
+	return profileRepo.NewFaceRepository(db)
 }
 
 func ProvideMessageBroker(cfg *env.Config, baseLogger loggerIntf.Logger) brokerIntf.MessageBroker {

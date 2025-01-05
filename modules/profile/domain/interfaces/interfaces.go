@@ -12,6 +12,10 @@ type PhotoRepository interface {
 	// GetByID возвращает Photo по его ID.
 	GetByID(ctx context.Context, id uint) (*domain.Photo, error)
 
+	ExistsByIndexID(ctx context.Context, id uint) (bool, error)
+
+	GetIDByIndexID(ctx context.Context, id uint32) (uint, error)
+
 	// GetByProfileID возвращает все Photos, связанные с указанным ProfileID.
 	GetByProfileID(ctx context.Context, profileID uint) ([]domain.Photo, error)
 
@@ -36,4 +40,8 @@ type ProfileRepository interface {
 
 	// Delete удаляет профиль по его ID.
 	Delete(ctx context.Context, id uint) error
+}
+
+type FaceRepository interface {
+	Create(ctx context.Context, face *domain.Face) error
 }

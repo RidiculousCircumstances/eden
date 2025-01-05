@@ -17,6 +17,7 @@ var DatabaseSet = wire.NewSet(
 	ProvideDatabase,
 	ProvidePhotoRepository,
 	ProvideProfileRepository,
+	ProvideFaceRepository,
 )
 
 var ApplicationSet = wire.NewSet(
@@ -24,10 +25,12 @@ var ApplicationSet = wire.NewSet(
 	ProvideLogger,
 	ProvideApplication,
 	ProvideStreamForgeMessageProcessor,
+	ProvideTraceFaceMessageProcessor,
 	ProvideMessageBroker,
 	ProvideHandlerConfigs,
 	ProvidePhotoService,
 	ProvideProfileService,
+	ProvideFaceService,
 )
 
 func InitializeApp() (Application, error) {

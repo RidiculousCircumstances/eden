@@ -13,12 +13,21 @@ type HandlerConfig struct {
 	Handler      interfaces.MessageHandler
 }
 
-func BuildHandlerConfigs(env *env.Config, msgProcessor consumerIntf.StreamForgeMessageProcessor) []HandlerConfig {
+func BuildHandlerConfigs(
+	env *env.Config,
+	sfMsgProcessor consumerIntf.StreamForgeMessageProcessor,
+	tfMsgProcessor consumerIntf.TraceFaceMessageProcessor,
+) []HandlerConfig {
 	return []HandlerConfig{
 		{
 			env.EdenQueueName,
 			env.EdenExchangeName,
-			consumer.NewStreamForgeMessageHandler(msgProcessor),
+			consumer.NewStreamForgeMessageHandler(sfMsgProcessor),
+		},
+		{
+			env.TraceFaceQueueName,
+			env.EdenExchangeName,
+			consumer.NewTraceFaceMessageHandler(tfMsgProcessor),
 		},
 	}
 }
