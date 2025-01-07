@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	consumerIntf "eden/modules/profile/application/consumer/interfaces"
+	servIntf "eden/modules/profile/application/service/interfaces"
 	"eden/modules/profile/domain"
 	"eden/modules/profile/domain/interfaces"
 )
@@ -11,7 +11,7 @@ type photoService struct {
 	repo interfaces.PhotoRepository
 }
 
-func NewPhotoService(repo interfaces.PhotoRepository) consumerIntf.PhotoService {
+func NewPhotoService(repo interfaces.PhotoRepository) servIntf.PhotoService {
 	return &photoService{repo: repo}
 }
 
@@ -25,4 +25,12 @@ func (s *photoService) GetPhotoIdByIndexId(ctx context.Context, indexId uint32) 
 
 func (s *photoService) GetPhotosByProfileID(ctx context.Context, profileID uint) ([]domain.Photo, error) {
 	return s.repo.GetByProfileID(ctx, profileID)
+}
+
+func (s *photoService) GetProfileByIndexId(ctx context.Context, indexId uint32) (*domain.Profile, error) {
+	return s.repo.GetProfileByPhotoIndexID(ctx, indexId)
+}
+
+func (s *photoService) GetProfilesByIndexIds(ctx context.Context, indexIds []uint32) ([]domain.Profile, error) {
+	return s.repo.GetProfilesByPhotoIndexIDs(ctx, indexIds)
 }

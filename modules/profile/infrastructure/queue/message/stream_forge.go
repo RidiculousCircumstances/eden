@@ -9,19 +9,3 @@ type StreamForgeMessage struct {
 	BirthDate   string  `json:"birth_date"`
 	Photos      []Photo `json:"photos"`
 }
-
-type Photo struct {
-	PhotoId  uint32 `json:"photo_id"`
-	PhotoUrl string `json:"photo_url"`
-}
-
-type TraceFaceMessage struct {
-	PhotoId uint32 `json:"photo_id"`
-	Faces   []Face `json:"faces_info"`
-}
-
-type Face struct {
-	Age  int    `json:"age"`
-	Sex  int    `json:"sex"`
-	Bbox string `json:"bbox"`
-}

@@ -5,8 +5,6 @@ import (
 	consumerIntf "eden/modules/profile/application/consumer/interfaces"
 	"eden/modules/profile/infrastructure/queue/message"
 	"eden/shared/broker/interfaces"
-	"encoding/base64"
-	"encoding/json"
 	"errors"
 )
 
@@ -23,21 +21,13 @@ func NewStreamForgeMessageHandler(messageProcessor consumerIntf.StreamForgeMessa
 	return &streamForgeMessageHandler{messageProcessor: messageProcessor}
 }
 
-func (mh *streamForgeMessageHandler) Handle(ctx context.Context, msg []byte) (bool, error) {
-	// Декодируем Base64
-	decodedPayload, decodeErr := base64.StdEncoding.DecodeString(string(msg))
-	if decodeErr != nil {
-		return false, errors.Join(ErrBase64DecodingFailed, decodeErr)
+func (mh *streamForgeMessageHandler) Handle(ctx context.Context, msg interface{}) (bool, error) {
+	streamForgeMessage, ok := msg.(message.StreamForgeMessage)
+	if !ok {
+		return false, errors.New("invalid message type, expected: StreamForgeMessage")
 	}
 
-	// Десериализуем JSON
-	var streamForgeMsg message.StreamForgeMessage
-	if unmarshalErr := json.Unmarshal(decodedPayload, &streamForgeMsg); unmarshalErr != nil {
-		return false, errors.Join(ErrJSONUnmarshalFailed, unmarshalErr)
-	}
-
-	// Передаём сообщение в messageProcessor
-	if processErr := mh.messageProcessor.Process(ctx, streamForgeMsg); processErr != nil {
+	if processErr := mh.messageProcessor.Process(ctx, streamForgeMessage); processErr != nil {
 		// Логика обработки ошибки
 		return false, processErr
 	}

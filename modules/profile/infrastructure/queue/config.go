@@ -17,17 +17,23 @@ func BuildHandlerConfigs(
 	env *env.Config,
 	sfMsgProcessor consumerIntf.StreamForgeMessageProcessor,
 	tfMsgProcessor consumerIntf.TraceFaceMessageProcessor,
+	searchMessageProcessor consumerIntf.EdenSearchMessageProcessor,
 ) []HandlerConfig {
 	return []HandlerConfig{
 		{
-			env.EdenQueueName,
+			env.EdenProfileQueueName,
 			env.EdenExchangeName,
 			consumer.NewStreamForgeMessageHandler(sfMsgProcessor),
 		},
 		{
-			env.TraceFaceQueueName,
+			env.EdenIndexedQueueName,
 			env.EdenExchangeName,
 			consumer.NewTraceFaceMessageHandler(tfMsgProcessor),
+		},
+		{
+			env.EdenSearchQueueName,
+			env.EdenExchangeName,
+			consumer.NewEdenSearchMessageHandler(searchMessageProcessor),
 		},
 	}
 }

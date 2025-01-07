@@ -61,7 +61,7 @@ func (r *photoRepository) GetByProfileID(ctx context.Context, profileID uint) ([
 }
 
 // В репозитории можно создать метод для выполнения запроса с JOIN.
-func (r *photoRepository) GetProfileByPhotoIndexID(ctx context.Context, indexID uint) (*domain.Profile, error) {
+func (r *photoRepository) GetProfileByPhotoIndexID(ctx context.Context, indexID uint32) (*domain.Profile, error) {
 	var profile domain.Profile
 	err := r.db.WithContext(ctx).
 		Joins("JOIN profiles ON profiles.id = photos.profile_id").
@@ -81,4 +81,35 @@ func (r *photoRepository) Update(ctx context.Context, photo *domain.Photo) error
 func (r *photoRepository) Delete(ctx context.Context, id uint) error {
 	// Удаляет запись Photo по его ID
 	return r.db.WithContext(ctx).Delete(&domain.Photo{}, id).Error
+}
+
+func (r *photoRepository) GetProfilesByPhotoIndexIDs(ctx context.Context, indexIDs []uint32) ([]domain.Profile, error) {
+	if len(indexIDs) == 0 {
+		return nil, nil // Если список пуст, возвращаем nil
+	}
+
+	var profiles []domain.Profile
+
+	err := r.db.WithContext(ctx).
+		Distinct(
+			"profiles.id",
+			"profiles.source_id",
+			"profiles.city_id",
+			"profiles.url",
+			"profiles.external_id",
+			"profiles.gender",
+			"profiles.birth_date",
+			"profiles.person_id",
+			"profiles.created_at",
+			"profiles.updated_at",
+		).
+		Joins("JOIN photos ON photos.profile_id = profiles.id").
+		Where("photos.index_id IN ?", indexIDs).
+		Find(&profiles).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return profiles, nil
 }

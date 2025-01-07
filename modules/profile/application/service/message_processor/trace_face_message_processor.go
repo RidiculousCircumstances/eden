@@ -1,8 +1,9 @@
-package service
+package message_processor
 
 import (
 	"context"
-	"eden/modules/profile/application/consumer/interfaces"
+	consumerIntf "eden/modules/profile/application/consumer/interfaces"
+	"eden/modules/profile/application/service/interfaces"
 	"eden/modules/profile/domain"
 	"eden/modules/profile/infrastructure/queue/message"
 	"errors"
@@ -17,7 +18,7 @@ type TraceFaceMessageProcessor struct {
 	photoService interfaces.PhotoService
 }
 
-func NewTraceFaceMessageProcessor(faceService interfaces.FaceService, photoService interfaces.PhotoService) interfaces.TraceFaceMessageProcessor {
+func NewTraceFaceMessageProcessor(faceService interfaces.FaceService, photoService interfaces.PhotoService) consumerIntf.TraceFaceMessageProcessor {
 	return &TraceFaceMessageProcessor{
 		faceService:  faceService,
 		photoService: photoService,

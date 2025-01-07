@@ -3,121 +3,84 @@ package broker
 import (
 	"context"
 	"eden/shared/broker/interfaces"
-	"encoding/json"
-	"github.com/ThreeDotsLabs/watermill"
-	"github.com/ThreeDotsLabs/watermill-amqp/v2/pkg/amqp"
-	"github.com/ThreeDotsLabs/watermill/message"
-	"time"
+	loggerIntf "eden/shared/logger/interfaces"
+	"go.uber.org/zap"
+	"sync"
 )
 
-type watermillSubscriber struct {
-	connection *amqp.ConnectionWrapper
-	logger     watermill.LoggerAdapter
+// Логирующие сообщения
+var (
+	logDeserializeError        = "Deserialize error"
+	logErrorProcessingMessage  = "Error processing message"
+	logMessageNotAcknowledged  = "Message not acknowledged"
+	logErrorAcknowledgeMessage = "Error acknowledge message"
+)
+
+type subscriber struct {
+	connection interfaces.Connection
+	logger     loggerIntf.Logger
+	serializer interfaces.Serializer
 }
 
-func NewSubscriber(conn *amqp.ConnectionWrapper, logger watermill.LoggerAdapter) (interfaces.Subscriber, error) {
-	return &watermillSubscriber{
+func NewSubscriber(conn interfaces.Connection, serializer interfaces.Serializer, logger loggerIntf.Logger) interfaces.Subscriber {
+	return &subscriber{
 		connection: conn,
 		logger:     logger,
-	}, nil
+		serializer: serializer,
+	}
 }
 
-func (s *watermillSubscriber) Subscribe(ctx context.Context, exchangeName, topic string, handler interfaces.MessageHandler) error {
-	// Создаем конфигурацию подписчика
-	subConfig := amqp.NewDurableQueueConfig("")
-
-	// Настраиваем динамическое имя обменника
-	subConfig.Exchange.GenerateName = func(topic string) string {
-		return exchangeName
+func (s *subscriber) Subscribe(ctx context.Context, exchangeName, topic string, handler interfaces.MessageHandler) error {
+	messages, consumerErr := s.connection.Consume(ctx, exchangeName, topic)
+	if consumerErr != nil {
+		s.logger.Error("Error creating consumer", zap.Error(consumerErr))
+		return consumerErr
 	}
 
-	subConfig.Exchange.Type = "direct"
-	subConfig.Exchange.Durable = true
+	var wg sync.WaitGroup
+	defer wg.Wait()
 
-	subConfig.QueueBind = amqp.QueueBindConfig{
-		GenerateRoutingKey: func(topic string) string {
-			return topic
-		},
-	}
+	for msg := range messages {
+		wg.Add(1)
+		go func(msg interfaces.UnitOfWork) {
+			defer wg.Done()
 
-	// Создаем подписчика
-	sub, err := amqp.NewSubscriberWithConnection(subConfig, s.logger, s.connection)
-	if err != nil {
-		return err
-	}
-
-	// Подписываемся на топик
-	messages, err := sub.Subscribe(ctx, topic)
-	if err != nil {
-		return err
-	}
-
-	// Обрабатываем сообщения
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				_ = sub.Close() // Закрываем подписчика при завершении контекста
+			var deserializedPayload interface{}
+			serializerErr := s.serializer.Deserialize(msg.GetPayload(), &deserializedPayload)
+			if serializerErr != nil {
+				s.logger.Warn(logDeserializeError, zap.Error(serializerErr))
+				_ = msg.Nack(false)
 				return
-			case msg, ok := <-messages:
-				if !ok {
-					s.logger.Error("Message channel closed", nil, watermill.LogFields{"topic": topic})
-					return
-				}
-
-				// Обрабатываем сообщение
-				go func(m *message.Message) {
-					ack, err := handler.Handle(ctx, unwrapPayload(m.Payload))
-					if err != nil {
-						s.logger.Error("Error processing message", err, watermill.LogFields{
-							"message_id": m.UUID,
-						})
-					}
-
-					if ack {
-						m.Ack()
-					} else {
-						m.Nack()
-						time.Sleep(5 * time.Second)
-					}
-				}(msg)
 			}
-		}
-	}()
 
+			ack, handlerErr := handler.Handle(ctx, deserializedPayload)
+			if handlerErr != nil {
+				s.logger.Error(logErrorProcessingMessage, zap.Error(handlerErr))
+				_ = msg.Nack(false)
+				return
+			}
+
+			if ack {
+				if err := msg.Ack(); err != nil {
+					s.logger.Error(logErrorAcknowledgeMessage, zap.Error(err))
+				}
+			} else {
+				s.logger.Warn(logMessageNotAcknowledged)
+				_ = msg.Nack(true)
+			}
+		}(msg)
+	}
+
+	// Обработка завершения контекста
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		// Если контекст не завершен, продолжаем
+	}
 	return nil
 }
 
-func (s *watermillSubscriber) Close() error {
-	return s.connection.Close() // Закрываем общее подключение
-}
-
-func unwrapPayload(payload message.Payload) []byte {
-	var decodedPayload map[string]interface{}
-
-	// Пробуем распарсить Payload как JSON
-	err := json.Unmarshal(payload, &decodedPayload)
-	if err != nil {
-		// Если не удалось распарсить, возвращаем оригинальные данные
-		return payload
-	}
-
-	// Проверяем наличие ключа Payload
-	if value, exists := decodedPayload["Payload"]; exists {
-		// Если это строка, возвращаем как массив байт
-		if strValue, ok := value.(string); ok {
-			return []byte(strValue)
-		}
-
-		// Если это объект, сериализуем его в JSON и возвращаем как массив байт
-		if objValue, ok := value.(map[string]interface{}); ok {
-			// Сериализуем объект в JSON
-			serializedObj, err := json.Marshal(objValue)
-			if err == nil {
-				return serializedObj
-			}
-		}
-	}
-
-	return payload
+func (s *subscriber) Close() error {
+	return s.connection.Close()
 }

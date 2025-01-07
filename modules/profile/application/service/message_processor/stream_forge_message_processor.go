@@ -1,8 +1,9 @@
-package service
+package message_processor
 
 import (
 	"context"
-	"eden/modules/profile/application/consumer/interfaces"
+	consumerIntf "eden/modules/profile/application/consumer/interfaces"
+	"eden/modules/profile/application/service/interfaces"
 	"eden/modules/profile/domain"
 	"eden/modules/profile/domain/source"
 	"eden/modules/profile/infrastructure/queue/message"
@@ -19,7 +20,7 @@ type messageProcessor struct {
 	photoService   interfaces.PhotoService   // Сервис для работы с фотографиями
 }
 
-func NewStreamForgeMessageProcessor(profileService interfaces.ProfileService, photoService interfaces.PhotoService) interfaces.StreamForgeMessageProcessor {
+func NewStreamForgeMessageProcessor(profileService interfaces.ProfileService, photoService interfaces.PhotoService) consumerIntf.StreamForgeMessageProcessor {
 	return &messageProcessor{
 		profileService: profileService,
 		photoService:   photoService,

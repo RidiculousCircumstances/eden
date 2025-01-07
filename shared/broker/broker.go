@@ -3,35 +3,30 @@ package broker
 import (
 	"context"
 	"eden/shared/broker/interfaces"
-	"encoding/json"
-	"github.com/ThreeDotsLabs/watermill"
-	"github.com/ThreeDotsLabs/watermill-amqp/v2/pkg/amqp"
-	"github.com/ThreeDotsLabs/watermill/message"
+	loggerIntf "eden/shared/logger/interfaces"
 	"sync"
 )
 
-type PubFactory func(conn *amqp.ConnectionWrapper) (interfaces.Publisher, error)
-type SubFactory func(conn *amqp.ConnectionWrapper) (interfaces.Subscriber, error)
+type PubFactory func(conn interfaces.Connection) interfaces.Publisher
+type SubFactory func(conn interfaces.Connection) interfaces.Subscriber
 
 type messageBroker struct {
 	publisherFactory  PubFactory
 	subscriberFactory SubFactory
-	conn              *amqp.ConnectionWrapper
-
-	publisher     interfaces.Publisher
-	subscriber    interfaces.Subscriber
-	publisherMux  sync.Mutex
-	subscriberMux sync.Mutex
-
-	logger watermill.LoggerAdapter
+	conn              interfaces.Connection
+	publisher         interfaces.Publisher
+	subscriber        interfaces.Subscriber
+	publisherMux      sync.Mutex
+	subscriberMux     sync.Mutex
+	logger            loggerIntf.Logger
 }
 
-// Config содержит фабричные функции и логгер для инициализации брокера
 type Config struct {
 	PublisherFactory  PubFactory
 	SubscriberFactory SubFactory
 	ConnFactory       interfaces.ConnFactory
-	Logger            watermill.LoggerAdapter
+	Logger            loggerIntf.Logger
+	Serializer        interfaces.Serializer // Добавляем сериализатор в конфиг
 }
 
 func NewMessageBroker(cfg Config) interfaces.MessageBroker {
@@ -57,12 +52,7 @@ func (mb *messageBroker) lazyInitPublisher() error {
 		return nil // Уже инициализирован
 	}
 
-	pub, err := mb.publisherFactory(mb.conn)
-	if err != nil {
-		return err
-	}
-
-	mb.publisher = pub
+	mb.publisher = mb.publisherFactory(mb.conn)
 	return nil
 }
 
@@ -75,12 +65,7 @@ func (mb *messageBroker) lazyInitSubscriber() error {
 		return nil // Уже инициализирован
 	}
 
-	sub, err := mb.subscriberFactory(mb.conn)
-	if err != nil {
-		return err
-	}
-
-	mb.subscriber = sub
+	mb.subscriber = mb.subscriberFactory(mb.conn)
 	return nil
 }
 
@@ -90,21 +75,17 @@ func (mb *messageBroker) Publish(ctx context.Context, exchangeName, topic string
 		return err
 	}
 
-	payload, err := json.Marshal(data)
-	if err != nil {
-		return err
-	}
-
-	msg := message.NewMessage(watermill.NewUUID(), payload)
-	return mb.publisher.Publish(ctx, exchangeName, topic, msg)
+	return mb.publisher.Publish(ctx, exchangeName, topic, data)
 }
 
 // Subscribe подписывается на топик и обрабатывает сообщения с помощью переданного обработчика
 func (mb *messageBroker) Subscribe(ctx context.Context, exchangeName, topic string, handler interfaces.MessageHandler) error {
+	// Инициализируем подписчика (ленивый метод)
 	if err := mb.lazyInitSubscriber(); err != nil {
 		return err
 	}
 
+	// Просто вызываем метод Subscribe из уже инициализированного подписчика
 	return mb.subscriber.Subscribe(ctx, exchangeName, topic, handler)
 }
 

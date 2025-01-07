@@ -3,51 +3,42 @@ package broker
 import (
 	"context"
 	"eden/shared/broker/interfaces"
-	"encoding/json"
-	"github.com/ThreeDotsLabs/watermill"
-	"github.com/ThreeDotsLabs/watermill-amqp/v2/pkg/amqp"
-	"github.com/ThreeDotsLabs/watermill/message"
+	loggerIntf "eden/shared/logger/interfaces"
+	"go.uber.org/zap"
 )
 
-type watermillPublisher struct {
-	connection *amqp.ConnectionWrapper // Общий объект подключения
-	logger     watermill.LoggerAdapter // Логгер
+type publisher struct {
+	connection interfaces.Connection // Используем интерфейс соединения
+	logger     loggerIntf.Logger     // Логгер
+	serializer interfaces.Serializer // Сериализатор
 }
 
-func NewPublisher(conn *amqp.ConnectionWrapper, logger watermill.LoggerAdapter) (interfaces.Publisher, error) {
-	return &watermillPublisher{
+// NewPublisher создает нового паблишера, используя интерфейс соединения.
+func NewPublisher(conn interfaces.Connection, serializer interfaces.Serializer, logger loggerIntf.Logger) interfaces.Publisher {
+	return &publisher{
 		connection: conn,
 		logger:     logger,
-	}, nil
+		serializer: serializer,
+	}
 }
 
-func (p *watermillPublisher) Publish(ctx context.Context, exchangeName, topic string, data interface{}) error {
-	pubConfig := amqp.NewDurableQueueConfig("")
-	pubConfig.Exchange.GenerateName = func(topic string) string {
-		return exchangeName
-	}
-	pubConfig.Exchange.Type = "direct"
-	pubConfig.Exchange.Durable = true
-	pubConfig.QueueBind = amqp.QueueBindConfig{
-		GenerateRoutingKey: func(topic string) string {
-			return topic
-		},
-	}
-
-	pub, err := amqp.NewPublisherWithConnection(pubConfig, p.logger, p.connection)
+func (p *publisher) Publish(ctx context.Context, exchangeName, topic string, data interface{}) error {
+	// Сериализация данных
+	payload, err := p.serializer.Serialize(data)
 	if err != nil {
+		p.logger.Error("Failed to serialize data", zap.Error(err))
 		return err
 	}
 
-	payload, err := json.Marshal(data)
+	// Публикация сообщения через интерфейс соединения
+	err = p.connection.Publish(ctx, exchangeName, topic, payload)
 	if err != nil {
-		return err
+		p.logger.Error("Failed to publish message", zap.Error(err))
 	}
-
-	msg := message.NewMessage(watermill.NewUUID(), payload)
-	return pub.Publish(topic, msg)
+	return err
 }
 
-func (p *watermillPublisher) Close() error {
-	return p.connection.Close() // Закрываем соединение
+func (p *publisher) Close() error {
+	// Закрываем соединение через интерфейс
+	return p.connection.Close()
 }

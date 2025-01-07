@@ -19,7 +19,9 @@ type PhotoRepository interface {
 	// GetByProfileID возвращает все Photos, связанные с указанным ProfileID.
 	GetByProfileID(ctx context.Context, profileID uint) ([]domain.Photo, error)
 
-	GetProfileByPhotoIndexID(ctx context.Context, indexID uint) (*domain.Profile, error)
+	GetProfileByPhotoIndexID(ctx context.Context, indexID uint32) (*domain.Profile, error)
+
+	GetProfilesByPhotoIndexIDs(ctx context.Context, indexIDs []uint32) ([]domain.Profile, error)
 
 	// Update обновляет данные существующего Photo.
 	Update(ctx context.Context, photo *domain.Photo) error

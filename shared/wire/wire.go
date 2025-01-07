@@ -31,6 +31,10 @@ var ApplicationSet = wire.NewSet(
 	ProvidePhotoService,
 	ProvideProfileService,
 	ProvideFaceService,
+	ProvideEdenSearchMessageProcessor,
+	ProvideEdenGateClient,
+	ProvideEdenGateSearchResultPublisher,
+	ProvideBrokerSerializer,
 )
 
 func InitializeApp() (Application, error) {

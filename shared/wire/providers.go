@@ -3,46 +3,66 @@ package wire
 import (
 	"eden/config/env"
 	consumerIntf "eden/modules/profile/application/consumer/interfaces"
+	"eden/modules/profile/application/publisher"
 	"eden/modules/profile/application/service"
+	servIntf "eden/modules/profile/application/service/interfaces"
+	"eden/modules/profile/application/service/message_processor"
 	profileRepoIntf "eden/modules/profile/domain/interfaces"
+	"eden/modules/profile/infrastructure/eden_gate"
+	edenGateIntf "eden/modules/profile/infrastructure/eden_gate/interfaces"
 	"eden/modules/profile/infrastructure/queue"
+	"eden/modules/profile/infrastructure/queue/message"
 	profileRepo "eden/modules/profile/infrastructure/repository"
-	"eden/shared/broker"
+	brokerLib "eden/shared/broker"
+	brokerLibAmqp "eden/shared/broker/amqp"
 	brokerIntf "eden/shared/broker/interfaces"
+	"eden/shared/broker/serializer"
 	"eden/shared/database"
 	lifecycleIntf "eden/shared/lifecycle/interfaces"
 	"eden/shared/logger"
 	loggerIntf "eden/shared/logger/interfaces"
-	"github.com/ThreeDotsLabs/watermill-amqp/v2/pkg/amqp"
 	"gorm.io/gorm"
 )
 
-func ProvideProfileService(repo profileRepoIntf.ProfileRepository) consumerIntf.ProfileService {
+func ProvideProfileService(repo profileRepoIntf.ProfileRepository) servIntf.ProfileService {
 	return service.NewProfileService(repo)
 }
 
-func ProvidePhotoService(repo profileRepoIntf.PhotoRepository) consumerIntf.PhotoService {
+func ProvidePhotoService(repo profileRepoIntf.PhotoRepository) servIntf.PhotoService {
 	return service.NewPhotoService(repo)
 }
 
-func ProvideFaceService(repo profileRepoIntf.FaceRepository) consumerIntf.FaceService {
+func ProvideFaceService(repo profileRepoIntf.FaceRepository) servIntf.FaceService {
 	return service.NewFaceService(repo)
 }
 
-func ProvideStreamForgeMessageProcessor(profileSrv consumerIntf.ProfileService, photoService consumerIntf.PhotoService) consumerIntf.StreamForgeMessageProcessor {
-	return service.NewStreamForgeMessageProcessor(profileSrv, photoService)
+func ProvideStreamForgeMessageProcessor(profileSrv servIntf.ProfileService, photoService servIntf.PhotoService) consumerIntf.StreamForgeMessageProcessor {
+	return message_processor.NewStreamForgeMessageProcessor(profileSrv, photoService)
 }
 
-func ProvideTraceFaceMessageProcessor(faceService consumerIntf.FaceService, photoService consumerIntf.PhotoService) consumerIntf.TraceFaceMessageProcessor {
-	return service.NewTraceFaceMessageProcessor(faceService, photoService)
+func ProvideTraceFaceMessageProcessor(faceService servIntf.FaceService, photoService servIntf.PhotoService) consumerIntf.TraceFaceMessageProcessor {
+	return message_processor.NewTraceFaceMessageProcessor(faceService, photoService)
+}
+
+func ProvideEdenSearchMessageProcessor(photoService servIntf.PhotoService, publisher consumerIntf.EdenGateSearchResultPublisher) consumerIntf.EdenSearchMessageProcessor {
+	return message_processor.NewEdenSearchMessageProcessor(photoService, publisher)
+}
+
+func ProvideEdenGateClient(broker brokerIntf.MessageBroker) edenGateIntf.Client {
+	return eden_gate.NewClient(broker)
+}
+
+func ProvideEdenGateSearchResultPublisher(client edenGateIntf.Client) consumerIntf.EdenGateSearchResultPublisher {
+	return publisher.NewEdenGateSearchResultPublisher(client)
 }
 
 func ProvideHandlerConfigs(
 	cfg *env.Config,
 	sfMessageProcessor consumerIntf.StreamForgeMessageProcessor,
 	tfMessageProcessor consumerIntf.TraceFaceMessageProcessor,
+	searchMessageHandler consumerIntf.EdenSearchMessageProcessor,
 ) []queue.HandlerConfig {
-	return queue.BuildHandlerConfigs(cfg, sfMessageProcessor, tfMessageProcessor)
+	return queue.BuildHandlerConfigs(cfg, sfMessageProcessor, tfMessageProcessor, searchMessageHandler)
 }
 
 func ProvideLifecycleHooks(handlerCfgs []queue.HandlerConfig, logger loggerIntf.Logger, broker brokerIntf.MessageBroker) []lifecycleIntf.Hook {
@@ -71,25 +91,33 @@ func ProvideFaceRepository(db *gorm.DB) profileRepoIntf.FaceRepository {
 	return profileRepo.NewFaceRepository(db)
 }
 
-func ProvideMessageBroker(cfg *env.Config, baseLogger loggerIntf.Logger) brokerIntf.MessageBroker {
-	logAdapter := logger.NewZapLoggerAdapter(baseLogger)
+func ProvideBrokerSerializer() brokerIntf.Serializer {
+	return serializer.NewJSONSerializer(
+		message.SearchProfileMessage{},
+		message.TraceFaceMessage{},
+		message.StreamForgeMessage{},
+	)
+}
 
-	pubFactory := func(conn *amqp.ConnectionWrapper) (brokerIntf.Publisher, error) {
-		return broker.NewPublisher(conn, logAdapter)
+func ProvideMessageBroker(cfg *env.Config, serializer brokerIntf.Serializer, logger loggerIntf.Logger) brokerIntf.MessageBroker {
+	pubFactory := func(conn brokerIntf.Connection) brokerIntf.Publisher {
+		return brokerLib.NewPublisher(conn, serializer, logger)
 	}
 
-	subFactory := func(conn *amqp.ConnectionWrapper) (brokerIntf.Subscriber, error) {
-		return broker.NewSubscriber(conn, logAdapter)
+	subFactory := func(conn brokerIntf.Connection) brokerIntf.Subscriber {
+		return brokerLib.NewSubscriber(conn, serializer, logger)
 	}
 
-	connFactory := broker.NewConnFactory(amqp.ConnectionConfig{
-		AmqpURI: cfg.RabbitMQURL,
-	}, logAdapter)
+	connFactory := brokerLibAmqp.NewConnFactory(brokerLibAmqp.ConnConfig{
+		AmqpURI:                   cfg.RabbitMQURL,
+		PublisherChannelPoolSize:  10,
+		SubscriberChannelPoolSize: 10,
+	})
 
-	return broker.NewMessageBroker(broker.Config{
+	return brokerLib.NewMessageBroker(brokerLib.Config{
 		PublisherFactory:  pubFactory,
 		SubscriberFactory: subFactory,
-		Logger:            logAdapter,
+		Logger:            logger,
 		ConnFactory:       connFactory,
 	})
 }

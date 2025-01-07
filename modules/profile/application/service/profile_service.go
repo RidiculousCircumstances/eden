@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	consumerIntf "eden/modules/profile/application/consumer/interfaces"
+	servIntf "eden/modules/profile/application/service/interfaces"
 	"eden/modules/profile/domain"
 	"eden/modules/profile/domain/interfaces"
 )
@@ -11,7 +11,7 @@ type profileService struct {
 	repo interfaces.ProfileRepository
 }
 
-func NewProfileService(repo interfaces.ProfileRepository) consumerIntf.ProfileService {
+func NewProfileService(repo interfaces.ProfileRepository) servIntf.ProfileService {
 	return &profileService{repo: repo}
 }
 
