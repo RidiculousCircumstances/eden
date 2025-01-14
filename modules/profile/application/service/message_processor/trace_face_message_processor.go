@@ -25,7 +25,7 @@ func NewTraceFaceMessageProcessor(faceService interfaces.FaceService, photoServi
 	}
 }
 
-func (p *TraceFaceMessageProcessor) Process(ctx context.Context, msg message.TraceFaceMessage) error {
+func (p *TraceFaceMessageProcessor) Process(ctx context.Context, msg message.SaveFacesCommand) error {
 	photoID, err := p.photoService.GetPhotoIdByIndexId(ctx, msg.PhotoId)
 	if err != nil {
 		return err

@@ -1,6 +1,6 @@
 package message
 
-type TraceFaceMessage struct {
+type SaveFacesCommand struct {
 	PhotoId uint32 `json:"photo_id"`
 	Faces   []Face `json:"faces_info"`
 }

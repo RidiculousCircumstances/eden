@@ -6,10 +6,10 @@ import (
 )
 
 type Client interface {
-	SendSearchResult(ctx context.Context, msg EdenGateSearchResultMessage) error
+	SendSearchResult(ctx context.Context, msg ProfileSearchCompletedEvent) error
 }
 
-type EdenGateSearchResultMessage struct {
+type ProfileSearchCompletedEvent struct {
 	RequestId string    `json:"request_id"`
 	Profiles  []Profile `json:"profiles"`
 }

@@ -19,9 +19,9 @@ func NewEdenSearchMessageHandler(messageProcessor interfaces.EdenSearchMessagePr
 }
 
 func (mh *edenSearchMessageHandler) Handle(ctx context.Context, msg interface{}) (bool, error) {
-	searchMessage, ok := msg.(message.SearchProfileMessage)
+	searchMessage, ok := msg.(message.SearchProfileCommand)
 	if !ok {
-		return false, errors.New("invalid message type, expected SearchProfileMessage")
+		return false, errors.New("invalid message type, expected SearchProfileCommand")
 	}
 
 	processErr := mh.messageProcessor.Process(ctx, searchMessage)

@@ -16,6 +16,6 @@ func NewEdenGateSearchResultPublisher(client edenClientIntf.Client) interfaces.E
 	}
 }
 
-func (p *EdenGateSearchResultPublisher) Publish(ctx context.Context, msg edenClientIntf.EdenGateSearchResultMessage) error {
+func (p *EdenGateSearchResultPublisher) Publish(ctx context.Context, msg edenClientIntf.ProfileSearchCompletedEvent) error {
 	return p.client.SendSearchResult(ctx, msg)
 }

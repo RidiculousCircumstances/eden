@@ -1,6 +1,6 @@
 package message
 
-type StreamForgeMessage struct {
+type SaveProfileCommand struct {
 	SourceAlias string  `json:"source_alias"`
 	ProfileID   string  `json:"profile_id"`
 	CityID      uint    `json:"city_id"`

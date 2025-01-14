@@ -18,6 +18,6 @@ func NewClient(broker brokerIntf.MessageBroker) interfaces.Client {
 	}
 }
 
-func (c *Client) SendSearchResult(ctx context.Context, msg interfaces.EdenGateSearchResultMessage) error {
+func (c *Client) SendSearchResult(ctx context.Context, msg interfaces.ProfileSearchCompletedEvent) error {
 	return c.broker.Publish(ctx, c.exchange, c.queueName, msg)
 }

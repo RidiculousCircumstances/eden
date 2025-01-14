@@ -27,7 +27,7 @@ func NewStreamForgeMessageProcessor(profileService interfaces.ProfileService, ph
 	}
 }
 
-func (p *messageProcessor) Process(ctx context.Context, msg message.StreamForgeMessage) error {
+func (p *messageProcessor) Process(ctx context.Context, msg message.SaveProfileCommand) error {
 	sourceId, ok := source.GetIDBySourceAlias(msg.SourceAlias)
 	if !ok {
 		return ErrInvalidSource

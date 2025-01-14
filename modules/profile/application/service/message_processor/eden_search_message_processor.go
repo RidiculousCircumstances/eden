@@ -24,7 +24,7 @@ func NewEdenSearchMessageProcessor(
 	}
 }
 
-func (p *EdenSearchMessageProcessor) Process(ctx context.Context, msg message.SearchProfileMessage) error {
+func (p *EdenSearchMessageProcessor) Process(ctx context.Context, msg message.SearchProfileCommand) error {
 	profiles, err := p.photoService.GetProfilesByIndexIds(ctx, msg.PhotoIds)
 	if err != nil {
 		return err
@@ -40,8 +40,8 @@ func (p *EdenSearchMessageProcessor) Process(ctx context.Context, msg message.Se
 	return nil
 }
 
-func buildSearchResultMessage(requestId string, profiles []domain.Profile) edenGateIntf.EdenGateSearchResultMessage {
-	return edenGateIntf.EdenGateSearchResultMessage{
+func buildSearchResultMessage(requestId string, profiles []domain.Profile) edenGateIntf.ProfileSearchCompletedEvent {
+	return edenGateIntf.ProfileSearchCompletedEvent{
 		RequestId: requestId,
 		Profiles:  buildProfiles(profiles),
 	}

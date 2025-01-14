@@ -22,9 +22,9 @@ func NewStreamForgeMessageHandler(messageProcessor consumerIntf.StreamForgeMessa
 }
 
 func (mh *streamForgeMessageHandler) Handle(ctx context.Context, msg interface{}) (bool, error) {
-	streamForgeMessage, ok := msg.(message.StreamForgeMessage)
+	streamForgeMessage, ok := msg.(message.SaveProfileCommand)
 	if !ok {
-		return false, errors.New("invalid message type, expected: StreamForgeMessage")
+		return false, errors.New("invalid message type, expected: SaveProfileCommand")
 	}
 
 	if processErr := mh.messageProcessor.Process(ctx, streamForgeMessage); processErr != nil {

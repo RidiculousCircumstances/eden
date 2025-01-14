@@ -62,7 +62,7 @@ func ProvideHandlerConfigs(
 	tfMessageProcessor consumerIntf.TraceFaceMessageProcessor,
 	searchMessageHandler consumerIntf.EdenSearchMessageProcessor,
 ) []queue.HandlerConfig {
-	return queue.BuildHandlerConfigs(cfg, sfMessageProcessor, tfMessageProcessor, searchMessageHandler)
+	return queue.RegisterHandlersConfig(cfg, sfMessageProcessor, tfMessageProcessor, searchMessageHandler)
 }
 
 func ProvideLifecycleHooks(handlerCfgs []queue.HandlerConfig, logger loggerIntf.Logger, broker brokerIntf.MessageBroker) []lifecycleIntf.Hook {
@@ -93,9 +93,9 @@ func ProvideFaceRepository(db *gorm.DB) profileRepoIntf.FaceRepository {
 
 func ProvideBrokerSerializer() brokerIntf.Serializer {
 	return serializer.NewJSONSerializer(
-		message.SearchProfileMessage{},
-		message.TraceFaceMessage{},
-		message.StreamForgeMessage{},
+		message.SearchProfileCommand{},
+		message.SaveFacesCommand{},
+		message.SaveProfileCommand{},
 	)
 }
 

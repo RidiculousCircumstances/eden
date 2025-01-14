@@ -13,7 +13,7 @@ type HandlerConfig struct {
 	Handler      interfaces.MessageHandler
 }
 
-func BuildHandlerConfigs(
+func RegisterHandlersConfig(
 	env *env.Config,
 	sfMsgProcessor consumerIntf.StreamForgeMessageProcessor,
 	tfMsgProcessor consumerIntf.TraceFaceMessageProcessor,

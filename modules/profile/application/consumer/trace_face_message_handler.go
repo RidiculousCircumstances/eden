@@ -23,9 +23,9 @@ func NewTraceFaceMessageHandler(messageProcessor consumerIntf.TraceFaceMessagePr
 }
 
 func (mh *TraceFaceMessageHandler) Handle(ctx context.Context, msg interface{}) (bool, error) {
-	traceFaceMessage, ok := msg.(message.TraceFaceMessage)
+	traceFaceMessage, ok := msg.(message.SaveFacesCommand)
 	if !ok {
-		return false, errors.New("invalid message type, expected: TraceFaceMessage")
+		return false, errors.New("invalid message type, expected: SaveFacesCommand")
 	}
 
 	processErr := mh.messageProcessor.Process(ctx, traceFaceMessage)
