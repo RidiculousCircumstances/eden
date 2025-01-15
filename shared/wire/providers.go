@@ -4,12 +4,12 @@ import (
 	"eden/config/env"
 	consumerIntf "eden/modules/profile/application/consumer/interfaces"
 	"eden/modules/profile/application/publisher"
+	pubIntf "eden/modules/profile/application/publisher/interfaces"
 	"eden/modules/profile/application/service"
 	servIntf "eden/modules/profile/application/service/interfaces"
 	"eden/modules/profile/application/service/message_processor"
 	profileRepoIntf "eden/modules/profile/domain/interfaces"
 	"eden/modules/profile/infrastructure/eden_gate"
-	edenGateIntf "eden/modules/profile/infrastructure/eden_gate/interfaces"
 	"eden/modules/profile/infrastructure/queue"
 	"eden/modules/profile/infrastructure/queue/message"
 	profileRepo "eden/modules/profile/infrastructure/repository"
@@ -48,11 +48,11 @@ func ProvideEdenSearchMessageProcessor(photoService servIntf.PhotoService, publi
 	return message_processor.NewEdenSearchMessageProcessor(photoService, publisher)
 }
 
-func ProvideEdenGateClient(broker brokerIntf.MessageBroker) edenGateIntf.Client {
+func ProvideEdenGateClient(broker brokerIntf.MessageBroker) pubIntf.EdenGateClient {
 	return eden_gate.NewClient(broker)
 }
 
-func ProvideEdenGateSearchResultPublisher(client edenGateIntf.Client) consumerIntf.EdenGateSearchResultPublisher {
+func ProvideEdenGateSearchResultPublisher(client pubIntf.EdenGateClient) consumerIntf.EdenGateSearchResultPublisher {
 	return publisher.NewEdenGateSearchResultPublisher(client)
 }
 
@@ -93,7 +93,7 @@ func ProvideFaceRepository(db *gorm.DB) profileRepoIntf.FaceRepository {
 
 func ProvideBrokerSerializer() brokerIntf.Serializer {
 	return serializer.NewJSONSerializer(
-		message.SearchProfileCommand{},
+		message.SearchProfilesCommand{},
 		message.SaveFacesCommand{},
 		message.SaveProfileCommand{},
 	)

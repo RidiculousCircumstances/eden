@@ -1,13 +1,8 @@
 package interfaces
 
 import (
-	"context"
 	"eden/modules/profile/infrastructure/queue/message"
 )
-
-type Client interface {
-	SendSearchResult(ctx context.Context, msg ProfileSearchCompletedEvent) error
-}
 
 type ProfileSearchCompletedEvent struct {
 	RequestId string    `json:"request_id"`

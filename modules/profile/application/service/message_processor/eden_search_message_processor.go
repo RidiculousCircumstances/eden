@@ -24,7 +24,7 @@ func NewEdenSearchMessageProcessor(
 	}
 }
 
-func (p *EdenSearchMessageProcessor) Process(ctx context.Context, msg message.SearchProfileCommand) error {
+func (p *EdenSearchMessageProcessor) Process(ctx context.Context, msg message.SearchProfilesCommand) error {
 	profiles, err := p.photoService.GetProfilesByIndexIds(ctx, msg.PhotoIds)
 	if err != nil {
 		return err

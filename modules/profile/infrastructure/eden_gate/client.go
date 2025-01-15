@@ -2,6 +2,7 @@ package eden_gate
 
 import (
 	"context"
+	pubIntf "eden/modules/profile/application/publisher/interfaces"
 	"eden/modules/profile/infrastructure/eden_gate/interfaces"
 	brokerIntf "eden/shared/broker/interfaces"
 )
@@ -12,7 +13,7 @@ type Client struct {
 	exchange  string
 }
 
-func NewClient(broker brokerIntf.MessageBroker) interfaces.Client {
+func NewClient(broker brokerIntf.MessageBroker) pubIntf.EdenGateClient {
 	return &Client{
 		broker: broker,
 	}

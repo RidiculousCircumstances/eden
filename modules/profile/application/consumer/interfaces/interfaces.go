@@ -19,5 +19,5 @@ type TraceFaceMessageProcessor interface {
 }
 
 type EdenSearchMessageProcessor interface {
-	Process(ctx context.Context, msg message.SearchProfileCommand) error
+	Process(ctx context.Context, msg message.SearchProfilesCommand) error
 }
