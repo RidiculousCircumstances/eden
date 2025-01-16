@@ -5,7 +5,7 @@ import (
 	consumerIntf "eden/modules/profile/application/consumer/interfaces"
 	"eden/modules/profile/application/service/interfaces"
 	"eden/modules/profile/domain"
-	edenGateIntf "eden/modules/profile/infrastructure/eden_gate/interfaces"
+	edenMsg "eden/modules/profile/infrastructure/eden_gate/messages"
 	"eden/modules/profile/infrastructure/queue/message"
 )
 
@@ -40,30 +40,32 @@ func (p *EdenSearchMessageProcessor) Process(ctx context.Context, msg message.Se
 	return nil
 }
 
-func buildSearchResultMessage(requestId string, profiles []domain.Profile) edenGateIntf.ProfileSearchCompletedEvent {
-	return edenGateIntf.ProfileSearchCompletedEvent{
+func buildSearchResultMessage(requestId string, profiles []domain.Profile) edenMsg.ProfileSearchCompletedEvent {
+	return edenMsg.ProfileSearchCompletedEvent{
 		RequestId: requestId,
 		Profiles:  buildProfiles(profiles),
 	}
 }
 
-func buildProfiles(profiles []domain.Profile) []edenGateIntf.Profile {
-	result := make([]edenGateIntf.Profile, len(profiles))
+func buildProfiles(profiles []domain.Profile) []edenMsg.Profile {
+	result := make([]edenMsg.Profile, len(profiles))
 	for i, profile := range profiles {
-		result[i] = edenGateIntf.Profile{
-			Url:    profile.URL,
-			Photos: buildPhotos(profile.Photos),
+		result[i] = edenMsg.Profile{
+			ProfileId: profile.ID,
+			Url:       profile.URL,
+			Photos:    buildPhotos(profile.Photos),
 		}
 	}
 	return result
 }
 
-func buildPhotos(photos []*domain.Photo) []message.Photo {
-	result := make([]message.Photo, len(photos))
+func buildPhotos(photos []*domain.Photo) []edenMsg.Photo {
+	result := make([]edenMsg.Photo, len(photos))
 	for i, photo := range photos {
-		result[i] = message.Photo{
-			PhotoId:  photo.IndexID,
-			PhotoUrl: photo.URL,
+		result[i] = edenMsg.Photo{
+			PhotoId:   photo.IndexID,
+			ProfileId: photo.ProfileID,
+			PhotoUrl:  photo.URL,
 		}
 	}
 	return result

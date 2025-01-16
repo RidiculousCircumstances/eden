@@ -3,7 +3,7 @@ package eden_gate
 import (
 	"context"
 	pubIntf "eden/modules/profile/application/publisher/interfaces"
-	"eden/modules/profile/infrastructure/eden_gate/interfaces"
+	"eden/modules/profile/infrastructure/eden_gate/messages"
 	brokerIntf "eden/shared/broker/interfaces"
 )
 
@@ -19,6 +19,6 @@ func NewClient(broker brokerIntf.MessageBroker) pubIntf.EdenGateClient {
 	}
 }
 
-func (c *Client) SendSearchResult(ctx context.Context, msg interfaces.ProfileSearchCompletedEvent) error {
+func (c *Client) SendSearchResult(ctx context.Context, msg messages.ProfileSearchCompletedEvent) error {
 	return c.broker.Publish(ctx, c.exchange, c.queueName, msg)
 }

@@ -2,12 +2,12 @@ package interfaces
 
 import (
 	"context"
-	"eden/modules/profile/infrastructure/eden_gate/interfaces"
+	"eden/modules/profile/infrastructure/eden_gate/messages"
 	"eden/modules/profile/infrastructure/queue/message"
 )
 
 type EdenGateSearchResultPublisher interface {
-	Publish(ctx context.Context, msg interfaces.ProfileSearchCompletedEvent) error
+	Publish(ctx context.Context, msg messages.ProfileSearchCompletedEvent) error
 }
 
 type StreamForgeMessageProcessor interface {

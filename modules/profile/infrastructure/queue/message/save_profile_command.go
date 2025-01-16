@@ -9,3 +9,8 @@ type SaveProfileCommand struct {
 	BirthDate   string  `json:"birth_date"`
 	Photos      []Photo `json:"photos"`
 }
+
+type Photo struct {
+	PhotoId  uint32 `json:"photo_id"`
+	PhotoUrl string `json:"photo_url"`
+}

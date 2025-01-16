@@ -4,7 +4,7 @@ import (
 	"context"
 	"eden/modules/profile/application/consumer/interfaces"
 	pubIntf "eden/modules/profile/application/publisher/interfaces"
-	edenGateClientIntf "eden/modules/profile/infrastructure/eden_gate/interfaces"
+	"eden/modules/profile/infrastructure/eden_gate/messages"
 )
 
 type EdenGateSearchResultPublisher struct {
@@ -17,6 +17,6 @@ func NewEdenGateSearchResultPublisher(client pubIntf.EdenGateClient) interfaces.
 	}
 }
 
-func (p *EdenGateSearchResultPublisher) Publish(ctx context.Context, msg edenGateClientIntf.ProfileSearchCompletedEvent) error {
+func (p *EdenGateSearchResultPublisher) Publish(ctx context.Context, msg messages.ProfileSearchCompletedEvent) error {
 	return p.client.SendSearchResult(ctx, msg)
 }
