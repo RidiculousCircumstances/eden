@@ -5,12 +5,7 @@ import (
 	consumerIntf "eden/modules/profile/application/consumer/interfaces"
 	"eden/modules/profile/infrastructure/queue/message"
 	"eden/shared/broker/interfaces"
-	"errors"
-)
-
-var (
-	ErrBase64DecodingFailed = errors.New("failed to decode Base64 payload")
-	ErrJSONUnmarshalFailed  = errors.New("failed to unmarshal JSON payload")
+	"encoding/json"
 )
 
 type streamForgeMessageHandler struct {
@@ -21,13 +16,14 @@ func NewStreamForgeMessageHandler(messageProcessor consumerIntf.StreamForgeMessa
 	return &streamForgeMessageHandler{messageProcessor: messageProcessor}
 }
 
-func (mh *streamForgeMessageHandler) Handle(ctx context.Context, msg interface{}) (bool, error) {
-	streamForgeMessage, ok := msg.(message.SaveProfileCommand)
-	if !ok {
-		return false, errors.New("invalid message type, expected: SaveProfileCommand")
+func (mh *streamForgeMessageHandler) Handle(ctx context.Context, msg []byte) (bool, error) {
+	var parsedMsg message.SaveProfileCommand
+	err := json.Unmarshal(msg, &parsedMsg)
+	if err != nil {
+		return false, err
 	}
 
-	if processErr := mh.messageProcessor.Process(ctx, streamForgeMessage); processErr != nil {
+	if processErr := mh.messageProcessor.Process(ctx, parsedMsg); processErr != nil {
 		// Логика обработки ошибки
 		return false, processErr
 	}

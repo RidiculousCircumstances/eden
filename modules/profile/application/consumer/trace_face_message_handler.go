@@ -5,6 +5,7 @@ import (
 	consumerIntf "eden/modules/profile/application/consumer/interfaces"
 	"eden/modules/profile/infrastructure/queue/message"
 	"eden/shared/broker/interfaces"
+	"encoding/json"
 	"errors"
 )
 
@@ -22,13 +23,14 @@ func NewTraceFaceMessageHandler(messageProcessor consumerIntf.TraceFaceMessagePr
 	}
 }
 
-func (mh *TraceFaceMessageHandler) Handle(ctx context.Context, msg interface{}) (bool, error) {
-	traceFaceMessage, ok := msg.(message.SaveFacesCommand)
-	if !ok {
-		return false, errors.New("invalid message type, expected: SaveFacesCommand")
+func (mh *TraceFaceMessageHandler) Handle(ctx context.Context, msg []byte) (bool, error) {
+	var parsedMsg message.SaveFacesCommand
+	err := json.Unmarshal(msg, &parsedMsg)
+	if err != nil {
+		return false, err
 	}
 
-	processErr := mh.messageProcessor.Process(ctx, traceFaceMessage)
+	processErr := mh.messageProcessor.Process(ctx, parsedMsg)
 	if processErr != nil {
 		return false, errors.Join(ErrMessageProcessing, processErr)
 	}

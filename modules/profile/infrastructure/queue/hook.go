@@ -26,12 +26,13 @@ func (c *ConsumerHook) Setup(ctx context.Context) error {
 
 // Start запускает консьюмеров
 func (c *ConsumerHook) Start(ctx context.Context) error {
-	for _, cfg := range c.HandlerConfigs {
-		if err := c.Broker.Subscribe(ctx, cfg.ExchangeName, cfg.QueueName, cfg.Handler); err != nil {
-			c.Logger.Error("Failed to subscribe", zap.Error(err))
-			return err
+	go func() {
+		for _, cfg := range c.HandlerConfigs {
+			if err := c.Broker.Subscribe(ctx, cfg.ExchangeName, cfg.QueueName, cfg.Handler); err != nil {
+				c.Logger.Error("Failed to subscribe", zap.Error(err))
+			}
 		}
-	}
+	}()
 
 	return nil
 }

@@ -10,7 +10,6 @@ import (
 
 // Логирующие сообщения
 var (
-	logDeserializeError        = "Deserialize error"
 	logErrorProcessingMessage  = "Error processing message"
 	logMessageNotAcknowledged  = "Message not acknowledged"
 	logErrorAcknowledgeMessage = "Error acknowledge message"
@@ -19,14 +18,12 @@ var (
 type subscriber struct {
 	connection interfaces.Connection
 	logger     loggerIntf.Logger
-	serializer interfaces.Serializer
 }
 
-func NewSubscriber(conn interfaces.Connection, serializer interfaces.Serializer, logger loggerIntf.Logger) interfaces.Subscriber {
+func NewSubscriber(conn interfaces.Connection, logger loggerIntf.Logger) interfaces.Subscriber {
 	return &subscriber{
 		connection: conn,
 		logger:     logger,
-		serializer: serializer,
 	}
 }
 
@@ -45,15 +42,7 @@ func (s *subscriber) Subscribe(ctx context.Context, exchangeName, topic string, 
 		go func(msg interfaces.UnitOfWork) {
 			defer wg.Done()
 
-			var deserializedPayload interface{}
-			serializerErr := s.serializer.Deserialize(msg.GetPayload(), &deserializedPayload)
-			if serializerErr != nil {
-				s.logger.Warn(logDeserializeError, zap.Error(serializerErr))
-				_ = msg.Nack(false)
-				return
-			}
-
-			ack, handlerErr := handler.Handle(ctx, deserializedPayload)
+			ack, handlerErr := handler.Handle(ctx, msg.GetPayload())
 			if handlerErr != nil {
 				s.logger.Error(logErrorProcessingMessage, zap.Error(handlerErr))
 				_ = msg.Nack(false)

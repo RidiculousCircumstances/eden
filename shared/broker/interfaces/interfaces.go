@@ -26,7 +26,7 @@ type Subscriber interface {
 }
 
 type MessageHandler interface {
-	Handle(ctx context.Context, msg interface{}) (bool, error)
+	Handle(ctx context.Context, msg []byte) (bool, error)
 }
 
 type ConnFactory interface {

@@ -26,7 +26,6 @@ type Config struct {
 	SubscriberFactory SubFactory
 	ConnFactory       interfaces.ConnFactory
 	Logger            loggerIntf.Logger
-	Serializer        interfaces.Serializer // Добавляем сериализатор в конфиг
 }
 
 func NewMessageBroker(cfg Config) interfaces.MessageBroker {

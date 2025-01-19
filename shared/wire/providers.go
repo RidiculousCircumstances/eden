@@ -11,12 +11,10 @@ import (
 	profileRepoIntf "eden/modules/profile/domain/interfaces"
 	"eden/modules/profile/infrastructure/eden_gate"
 	"eden/modules/profile/infrastructure/queue"
-	"eden/modules/profile/infrastructure/queue/message"
 	profileRepo "eden/modules/profile/infrastructure/repository"
 	brokerLib "eden/shared/broker"
 	brokerLibAmqp "eden/shared/broker/amqp"
 	brokerIntf "eden/shared/broker/interfaces"
-	"eden/shared/broker/serializer"
 	"eden/shared/database"
 	lifecycleIntf "eden/shared/lifecycle/interfaces"
 	"eden/shared/logger"
@@ -91,21 +89,13 @@ func ProvideFaceRepository(db *gorm.DB) profileRepoIntf.FaceRepository {
 	return profileRepo.NewFaceRepository(db)
 }
 
-func ProvideBrokerSerializer() brokerIntf.Serializer {
-	return serializer.NewJSONSerializer(
-		message.SearchProfilesCommand{},
-		message.SaveFacesCommand{},
-		message.SaveProfileCommand{},
-	)
-}
-
-func ProvideMessageBroker(cfg *env.Config, serializer brokerIntf.Serializer, logger loggerIntf.Logger) brokerIntf.MessageBroker {
+func ProvideMessageBroker(cfg *env.Config, logger loggerIntf.Logger) brokerIntf.MessageBroker {
 	pubFactory := func(conn brokerIntf.Connection) brokerIntf.Publisher {
-		return brokerLib.NewPublisher(conn, serializer, logger)
+		return brokerLib.NewPublisher(conn, logger)
 	}
 
 	subFactory := func(conn brokerIntf.Connection) brokerIntf.Subscriber {
-		return brokerLib.NewSubscriber(conn, serializer, logger)
+		return brokerLib.NewSubscriber(conn, logger)
 	}
 
 	connFactory := brokerLibAmqp.NewConnFactory(brokerLibAmqp.ConnConfig{

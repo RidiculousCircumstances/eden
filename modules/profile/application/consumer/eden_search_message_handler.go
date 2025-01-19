@@ -5,7 +5,7 @@ import (
 	"eden/modules/profile/application/consumer/interfaces"
 	"eden/modules/profile/infrastructure/queue/message"
 	brokerLib "eden/shared/broker/interfaces"
-	"errors"
+	"encoding/json"
 )
 
 type edenSearchMessageHandler struct {
@@ -18,13 +18,14 @@ func NewEdenSearchMessageHandler(messageProcessor interfaces.EdenSearchMessagePr
 	}
 }
 
-func (mh *edenSearchMessageHandler) Handle(ctx context.Context, msg interface{}) (bool, error) {
-	searchMessage, ok := msg.(message.SearchProfilesCommand)
-	if !ok {
-		return false, errors.New("invalid message type, expected SearchProfilesCommand")
+func (mh *edenSearchMessageHandler) Handle(ctx context.Context, msg []byte) (bool, error) {
+	var parsedMsg message.SearchProfilesCommand
+	err := json.Unmarshal(msg, &parsedMsg)
+	if err != nil {
+		return false, err
 	}
 
-	processErr := mh.messageProcessor.Process(ctx, searchMessage)
+	processErr := mh.messageProcessor.Process(ctx, parsedMsg)
 	if processErr != nil {
 		return false, processErr
 	}

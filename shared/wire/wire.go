@@ -34,7 +34,6 @@ var ApplicationSet = wire.NewSet(
 	ProvideEdenSearchMessageProcessor,
 	ProvideEdenGateClient,
 	ProvideEdenGateSearchResultPublisher,
-	ProvideBrokerSerializer,
 )
 
 func InitializeApp() (Application, error) {
