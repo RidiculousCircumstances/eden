@@ -50,8 +50,8 @@ func ProvideEdenGateClient(broker brokerIntf.MessageBroker) pubIntf.EdenGateClie
 	return eden_gate.NewClient(broker)
 }
 
-func ProvideEdenGateSearchResultPublisher(client pubIntf.EdenGateClient) consumerIntf.EdenGateSearchResultPublisher {
-	return publisher.NewEdenGateSearchResultPublisher(client)
+func ProvideEdenGateSearchResultPublisher(client pubIntf.EdenGateClient, logger loggerIntf.Logger) consumerIntf.EdenGateSearchResultPublisher {
+	return publisher.NewEdenGateSearchResultPublisher(client, logger)
 }
 
 func ProvideHandlerConfigs(

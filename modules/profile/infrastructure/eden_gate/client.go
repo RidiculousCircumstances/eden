@@ -8,17 +8,19 @@ import (
 )
 
 type Client struct {
-	broker    brokerIntf.MessageBroker
-	queueName string
-	exchange  string
+	broker            brokerIntf.MessageBroker
+	searchResultQueue string
+	exchange          string
 }
 
 func NewClient(broker brokerIntf.MessageBroker) pubIntf.EdenGateClient {
 	return &Client{
-		broker: broker,
+		broker:            broker,
+		searchResultQueue: "eden_gate_profiles_search_result_queue",
+		exchange:          "eden_gate_exchange",
 	}
 }
 
 func (c *Client) SendSearchResult(ctx context.Context, msg messages.ProfileSearchCompletedEvent) error {
-	return c.broker.Publish(ctx, c.exchange, c.queueName, msg)
+	return c.broker.Publish(ctx, c.exchange, c.searchResultQueue, msg)
 }

@@ -105,6 +105,7 @@ func (r *photoRepository) GetProfilesByPhotoIndexIDs(ctx context.Context, indexI
 		).
 		Joins("JOIN photos ON photos.profile_id = profiles.id").
 		Where("photos.index_id IN ?", indexIDs).
+		Preload("Photos").
 		Find(&profiles).Error
 
 	if err != nil {
