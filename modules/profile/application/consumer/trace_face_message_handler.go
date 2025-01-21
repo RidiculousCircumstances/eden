@@ -5,8 +5,10 @@ import (
 	consumerIntf "eden/modules/profile/application/consumer/interfaces"
 	"eden/modules/profile/infrastructure/queue/message"
 	"eden/shared/broker/interfaces"
+	loggerIntf "eden/shared/logger/interfaces"
 	"encoding/json"
 	"errors"
+	"go.uber.org/zap"
 )
 
 var (
@@ -14,12 +16,14 @@ var (
 )
 
 type TraceFaceMessageHandler struct {
-	messageProcessor consumerIntf.TraceFaceMessageProcessor
+	messageProcessor consumerIntf.SaveFaceInfo
+	logger           loggerIntf.Logger
 }
 
-func NewTraceFaceMessageHandler(messageProcessor consumerIntf.TraceFaceMessageProcessor) interfaces.MessageHandler {
+func NewTraceFaceMessageHandler(messageProcessor consumerIntf.SaveFaceInfo, logger loggerIntf.Logger) interfaces.MessageHandler {
 	return &TraceFaceMessageHandler{
 		messageProcessor: messageProcessor,
+		logger:           logger,
 	}
 }
 
@@ -27,11 +31,13 @@ func (mh *TraceFaceMessageHandler) Handle(ctx context.Context, msg []byte) (bool
 	var parsedMsg message.SaveFacesCommand
 	err := json.Unmarshal(msg, &parsedMsg)
 	if err != nil {
+		mh.logger.Error("[TraceFaceMessageHandler] failed unmarshalling message")
 		return false, err
 	}
 
 	processErr := mh.messageProcessor.Process(ctx, parsedMsg)
 	if processErr != nil {
+		mh.logger.Error("[TraceFaceMessageHandler] failed processing message: ", zap.Error(processErr))
 		return false, errors.Join(ErrMessageProcessing, processErr)
 	}
 

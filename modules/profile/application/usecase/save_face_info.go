@@ -1,9 +1,9 @@
-package message_processor
+package usecase
 
 import (
 	"context"
 	consumerIntf "eden/modules/profile/application/consumer/interfaces"
-	"eden/modules/profile/application/service/interfaces"
+	"eden/modules/profile/application/usecase/interfaces"
 	"eden/modules/profile/domain"
 	"eden/modules/profile/infrastructure/queue/message"
 	"errors"
@@ -13,19 +13,19 @@ var (
 	ErrPhotoNotFound = errors.New("photo not found by index ID")
 )
 
-type TraceFaceMessageProcessor struct {
+type SaveFaceInfo struct {
 	faceService  interfaces.FaceService
 	photoService interfaces.PhotoService
 }
 
-func NewTraceFaceMessageProcessor(faceService interfaces.FaceService, photoService interfaces.PhotoService) consumerIntf.TraceFaceMessageProcessor {
-	return &TraceFaceMessageProcessor{
+func NewSaveFaceInfo(faceService interfaces.FaceService, photoService interfaces.PhotoService) consumerIntf.SaveFaceInfo {
+	return &SaveFaceInfo{
 		faceService:  faceService,
 		photoService: photoService,
 	}
 }
 
-func (p *TraceFaceMessageProcessor) Process(ctx context.Context, msg message.SaveFacesCommand) error {
+func (p *SaveFaceInfo) Process(ctx context.Context, msg message.SaveFacesCommand) error {
 	photoID, err := p.photoService.GetPhotoIdByIndexId(ctx, msg.PhotoId)
 	if err != nil {
 		return err
@@ -42,7 +42,7 @@ func (p *TraceFaceMessageProcessor) Process(ctx context.Context, msg message.Sav
 	return nil
 }
 
-func (p *TraceFaceMessageProcessor) saveFace(ctx context.Context, photoId uint, faceItem message.Face) error {
+func (p *SaveFaceInfo) saveFace(ctx context.Context, photoId uint, faceItem message.Face) error {
 	face := domain.Face{
 		PhotoID: photoId,
 		Age:     faceItem.Age,

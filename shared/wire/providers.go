@@ -6,8 +6,8 @@ import (
 	"eden/modules/profile/application/publisher"
 	pubIntf "eden/modules/profile/application/publisher/interfaces"
 	"eden/modules/profile/application/service"
-	servIntf "eden/modules/profile/application/service/interfaces"
-	"eden/modules/profile/application/service/message_processor"
+	"eden/modules/profile/application/usecase"
+	servIntf "eden/modules/profile/application/usecase/interfaces"
 	profileRepoIntf "eden/modules/profile/domain/interfaces"
 	"eden/modules/profile/infrastructure/eden_gate"
 	"eden/modules/profile/infrastructure/queue"
@@ -34,16 +34,20 @@ func ProvideFaceService(repo profileRepoIntf.FaceRepository) servIntf.FaceServic
 	return service.NewFaceService(repo)
 }
 
-func ProvideStreamForgeMessageProcessor(profileSrv servIntf.ProfileService, photoService servIntf.PhotoService) consumerIntf.StreamForgeMessageProcessor {
-	return message_processor.NewStreamForgeMessageProcessor(profileSrv, photoService)
+func ProvideStreamForgeMessageProcessor(profileSrv servIntf.ProfileService, photoService servIntf.PhotoService) consumerIntf.SaveProfiles {
+	return usecase.NewSaveProfiles(profileSrv, photoService)
 }
 
-func ProvideTraceFaceMessageProcessor(faceService servIntf.FaceService, photoService servIntf.PhotoService) consumerIntf.TraceFaceMessageProcessor {
-	return message_processor.NewTraceFaceMessageProcessor(faceService, photoService)
+func ProvideTraceFaceMessageProcessor(faceService servIntf.FaceService, photoService servIntf.PhotoService) consumerIntf.SaveFaceInfo {
+	return usecase.NewSaveFaceInfo(faceService, photoService)
 }
 
-func ProvideEdenSearchMessageProcessor(photoService servIntf.PhotoService, publisher consumerIntf.EdenGateSearchResultPublisher) consumerIntf.EdenSearchMessageProcessor {
-	return message_processor.NewEdenSearchMessageProcessor(photoService, publisher)
+func ProvideEdenSearchMessageProcessor(
+	photoService servIntf.PhotoService,
+	publisher consumerIntf.EdenGateSearchResultPublisher,
+	logger loggerIntf.Logger,
+) consumerIntf.SearchProfiles {
+	return usecase.NewSearchProfiles(photoService, publisher, logger)
 }
 
 func ProvideEdenGateClient(broker brokerIntf.MessageBroker) pubIntf.EdenGateClient {
@@ -56,11 +60,12 @@ func ProvideEdenGateSearchResultPublisher(client pubIntf.EdenGateClient, logger 
 
 func ProvideHandlerConfigs(
 	cfg *env.Config,
-	sfMessageProcessor consumerIntf.StreamForgeMessageProcessor,
-	tfMessageProcessor consumerIntf.TraceFaceMessageProcessor,
-	searchMessageHandler consumerIntf.EdenSearchMessageProcessor,
+	logger loggerIntf.Logger,
+	sfMessageProcessor consumerIntf.SaveProfiles,
+	tfMessageProcessor consumerIntf.SaveFaceInfo,
+	searchMessageHandler consumerIntf.SearchProfiles,
 ) []queue.HandlerConfig {
-	return queue.RegisterHandlersConfig(cfg, sfMessageProcessor, tfMessageProcessor, searchMessageHandler)
+	return queue.RegisterHandlersConfig(cfg, logger, sfMessageProcessor, tfMessageProcessor, searchMessageHandler)
 }
 
 func ProvideLifecycleHooks(handlerCfgs []queue.HandlerConfig, logger loggerIntf.Logger, broker brokerIntf.MessageBroker) []lifecycleIntf.Hook {

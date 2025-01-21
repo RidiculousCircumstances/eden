@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	servIntf "eden/modules/profile/application/service/interfaces"
+	servIntf "eden/modules/profile/application/usecase/interfaces"
 	"eden/modules/profile/domain"
 	"eden/modules/profile/domain/interfaces"
 )

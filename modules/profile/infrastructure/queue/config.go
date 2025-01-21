@@ -5,6 +5,7 @@ import (
 	"eden/modules/profile/application/consumer"
 	consumerIntf "eden/modules/profile/application/consumer/interfaces"
 	"eden/shared/broker/interfaces"
+	loggerIntf "eden/shared/logger/interfaces"
 )
 
 type HandlerConfig struct {
@@ -15,25 +16,26 @@ type HandlerConfig struct {
 
 func RegisterHandlersConfig(
 	env *env.Config,
-	sfMsgProcessor consumerIntf.StreamForgeMessageProcessor,
-	tfMsgProcessor consumerIntf.TraceFaceMessageProcessor,
-	searchMessageProcessor consumerIntf.EdenSearchMessageProcessor,
+	logger loggerIntf.Logger,
+	sfMsgProcessor consumerIntf.SaveProfiles,
+	tfMsgProcessor consumerIntf.SaveFaceInfo,
+	searchMessageProcessor consumerIntf.SearchProfiles,
 ) []HandlerConfig {
 	return []HandlerConfig{
 		{
 			env.EdenProfileQueueName,
 			env.EdenExchangeName,
-			consumer.NewStreamForgeMessageHandler(sfMsgProcessor),
+			consumer.NewStreamForgeMessageHandler(sfMsgProcessor, logger),
 		},
 		{
 			env.EdenIndexedQueueName,
 			env.EdenExchangeName,
-			consumer.NewTraceFaceMessageHandler(tfMsgProcessor),
+			consumer.NewTraceFaceMessageHandler(tfMsgProcessor, logger),
 		},
 		{
 			env.EdenSearchQueueName,
 			env.EdenExchangeName,
-			consumer.NewEdenSearchMessageHandler(searchMessageProcessor),
+			consumer.NewEdenSearchMessageHandler(searchMessageProcessor, logger),
 		},
 	}
 }

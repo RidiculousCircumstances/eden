@@ -1,9 +1,9 @@
-package message_processor
+package usecase
 
 import (
 	"context"
 	consumerIntf "eden/modules/profile/application/consumer/interfaces"
-	"eden/modules/profile/application/service/interfaces"
+	"eden/modules/profile/application/usecase/interfaces"
 	"eden/modules/profile/domain"
 	"eden/modules/profile/domain/source"
 	"eden/modules/profile/infrastructure/queue/message"
@@ -15,19 +15,19 @@ var (
 	ErrInvalidSource = errors.New("invalid source alias")
 )
 
-type messageProcessor struct {
+type saveProfiles struct {
 	profileService interfaces.ProfileService // Сервис для работы с профилями
 	photoService   interfaces.PhotoService   // Сервис для работы с фотографиями
 }
 
-func NewStreamForgeMessageProcessor(profileService interfaces.ProfileService, photoService interfaces.PhotoService) consumerIntf.StreamForgeMessageProcessor {
-	return &messageProcessor{
+func NewSaveProfiles(profileService interfaces.ProfileService, photoService interfaces.PhotoService) consumerIntf.SaveProfiles {
+	return &saveProfiles{
 		profileService: profileService,
 		photoService:   photoService,
 	}
 }
 
-func (p *messageProcessor) Process(ctx context.Context, msg message.SaveProfileCommand) error {
+func (p *saveProfiles) Process(ctx context.Context, msg message.SaveProfileCommand) error {
 	sourceId, ok := source.GetIDBySourceAlias(msg.SourceAlias)
 	if !ok {
 		return ErrInvalidSource

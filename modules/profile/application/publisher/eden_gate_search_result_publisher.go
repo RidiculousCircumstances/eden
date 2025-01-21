@@ -21,6 +21,5 @@ func NewEdenGateSearchResultPublisher(client pubIntf.EdenGateClient, logger logg
 }
 
 func (p *EdenGateSearchResultPublisher) Publish(ctx context.Context, msg messages.ProfileSearchCompletedEvent) error {
-	p.logger.Info("[EdenGateSearchResultPublisher] Publishing result to Eden Gate")
 	return p.client.SendSearchResult(ctx, msg)
 }

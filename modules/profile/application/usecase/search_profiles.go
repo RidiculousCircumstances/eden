@@ -1,30 +1,35 @@
-package message_processor
+package usecase
 
 import (
 	"context"
 	consumerIntf "eden/modules/profile/application/consumer/interfaces"
-	"eden/modules/profile/application/service/interfaces"
+	"eden/modules/profile/application/usecase/interfaces"
 	"eden/modules/profile/domain"
 	edenMsg "eden/modules/profile/infrastructure/eden_gate/messages"
 	"eden/modules/profile/infrastructure/queue/message"
+	loggerIntf "eden/shared/logger/interfaces"
+	"go.uber.org/zap"
 )
 
-type EdenSearchMessageProcessor struct {
+type SearchProfiles struct {
 	photoService interfaces.PhotoService
 	publisher    consumerIntf.EdenGateSearchResultPublisher
+	logger       loggerIntf.Logger
 }
 
-func NewEdenSearchMessageProcessor(
+func NewSearchProfiles(
 	photoService interfaces.PhotoService,
 	publisher consumerIntf.EdenGateSearchResultPublisher,
-) consumerIntf.EdenSearchMessageProcessor {
-	return &EdenSearchMessageProcessor{
+	logger loggerIntf.Logger,
+) consumerIntf.SearchProfiles {
+	return &SearchProfiles{
 		photoService: photoService,
 		publisher:    publisher,
+		logger:       logger,
 	}
 }
 
-func (p *EdenSearchMessageProcessor) Process(ctx context.Context, msg message.SearchProfilesCommand) error {
+func (p *SearchProfiles) Process(ctx context.Context, msg message.SearchProfilesCommand) error {
 	profiles, err := p.photoService.GetProfilesByIndexIds(ctx, msg.PhotoIds)
 	if err != nil {
 		return err
@@ -37,6 +42,7 @@ func (p *EdenSearchMessageProcessor) Process(ctx context.Context, msg message.Se
 		return err
 	}
 
+	p.logger.Info("[SearchProfiles] message processed successfully: ", zap.String("requestId", msg.RequestId))
 	return nil
 }
 
