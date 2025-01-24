@@ -8,6 +8,7 @@ type ProfileSearchCompletedEvent struct {
 type Profile struct {
 	ProfileId uint    `json:"profile_id"`
 	Url       string  `json:"url"`
+	City      uint    `json:"city"`
 	Photos    []Photo `json:"photos"`
 }
 

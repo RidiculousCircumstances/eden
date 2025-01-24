@@ -107,6 +107,12 @@ func ProvideMessageBroker(cfg *env.Config, logger loggerIntf.Logger) brokerIntf.
 		AmqpURI:                   cfg.RabbitMQURL,
 		PublisherChannelPoolSize:  10,
 		SubscriberChannelPoolSize: 10,
+		Exchanges: []brokerLibAmqp.Exchange{
+			{
+				Name: cfg.EdenGateExchangeName,
+				Type: "direct",
+			},
+		},
 	})
 
 	return brokerLib.NewMessageBroker(brokerLib.Config{

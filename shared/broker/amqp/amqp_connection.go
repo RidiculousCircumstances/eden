@@ -6,13 +6,24 @@ import (
 	"github.com/rabbitmq/amqp091-go"
 )
 
+type Exchange struct {
+	Name string
+	Type string
+}
+
 type amqpConnection struct {
 	connection    *amqp091.Connection
 	publisherPool *ChannelPool
 	consumerPool  *ChannelPool
+	exchanges     []Exchange
 }
 
-func NewAMQPConnection(conn *amqp091.Connection, publisherPoolSize, consumerPoolSize int) (interfaces.Connection, error) {
+// Новый конструктор с поддержкой инициализации обменников
+func NewAMQPConnection(
+	conn *amqp091.Connection,
+	publisherPoolSize, consumerPoolSize int,
+	exchanges []Exchange,
+) (interfaces.Connection, error) {
 	publisherPool, err := NewChannelPool(conn, publisherPoolSize)
 	if err != nil {
 		return nil, err
@@ -21,23 +32,45 @@ func NewAMQPConnection(conn *amqp091.Connection, publisherPoolSize, consumerPool
 	if err != nil {
 		return nil, err
 	}
-	return &amqpConnection{
+
+	amqpConn := &amqpConnection{
 		connection:    conn,
 		publisherPool: publisherPool,
 		consumerPool:  consumerPool,
-	}, nil
+		exchanges:     exchanges,
+	}
+
+	// Инициализируем обменники
+	if err := amqpConn.initExchanges(); err != nil {
+		return nil, err
+	}
+
+	return amqpConn, nil
 }
 
-func (c *amqpConnection) Publish(ctx context.Context, exchangeName, routingKey string, message []byte) error {
+// Метод для инициализации всех обменников
+func (c *amqpConnection) initExchanges() error {
 	channel, err := c.publisherPool.GetChannel()
 	if err != nil {
 		return err
 	}
 	defer c.publisherPool.ReturnChannel(channel)
 
-	if err := c.declareExchange(channel, exchangeName); err != nil {
+	for _, exchange := range c.exchanges {
+		if err := c.declareExchange(channel, exchange.Name, exchange.Type); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Метод публикации
+func (c *amqpConnection) Publish(ctx context.Context, exchangeName, routingKey string, message []byte) error {
+	channel, err := c.publisherPool.GetChannel()
+	if err != nil {
 		return err
 	}
+	defer c.publisherPool.ReturnChannel(channel)
 
 	return channel.PublishWithContext(ctx,
 		exchangeName,
@@ -50,6 +83,7 @@ func (c *amqpConnection) Publish(ctx context.Context, exchangeName, routingKey s
 		})
 }
 
+// Метод для создания потребителя
 func (c *amqpConnection) Consume(ctx context.Context, exchangeName, topic string) (<-chan interfaces.UnitOfWork, error) {
 	channel, err := c.consumerPool.GetChannel()
 	if err != nil {
@@ -103,6 +137,7 @@ func (c *amqpConnection) Consume(ctx context.Context, exchangeName, topic string
 	return out, nil
 }
 
+// Метод для закрытия соединения
 func (c *amqpConnection) Close() error {
 	if err := c.publisherPool.Close(); err != nil {
 		return err
@@ -114,15 +149,15 @@ func (c *amqpConnection) Close() error {
 }
 
 // Приватный метод для объявления обменника
-func (c *amqpConnection) declareExchange(channel *amqp091.Channel, exchangeName string) error {
+func (c *amqpConnection) declareExchange(channel *amqp091.Channel, exchangeName, exchangeType string) error {
 	return channel.ExchangeDeclare(
 		exchangeName,
-		"direct",
-		true,
-		false,
-		false,
-		false,
-		nil,
+		exchangeType,
+		true,  // durable
+		false, // autoDelete
+		false, // internal
+		false, // noWait
+		nil,   // args
 	)
 }
 

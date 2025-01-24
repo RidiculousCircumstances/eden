@@ -23,6 +23,7 @@ type ConnConfig struct {
 	AmqpURI                   string
 	PublisherChannelPoolSize  int
 	SubscriberChannelPoolSize int
+	Exchanges                 []Exchange
 }
 
 // connFactory представляет фабрику для создания соединений с RabbitMQ
@@ -56,7 +57,7 @@ func (cf *connFactory) GetConnection() (interfaces.Connection, error) {
 	}
 
 	// Создаем объект amqpConnection
-	amqpConn, err := NewAMQPConnection(conn, cf.config.PublisherChannelPoolSize, cf.config.SubscriberChannelPoolSize)
+	amqpConn, err := NewAMQPConnection(conn, cf.config.PublisherChannelPoolSize, cf.config.SubscriberChannelPoolSize, cf.config.Exchanges)
 
 	if err != nil {
 		return nil, err

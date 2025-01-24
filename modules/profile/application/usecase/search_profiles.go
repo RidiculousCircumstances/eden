@@ -59,6 +59,7 @@ func buildProfiles(profiles []domain.Profile) []edenMsg.Profile {
 		result[i] = edenMsg.Profile{
 			ProfileId: profile.ID,
 			Url:       profile.URL,
+			City:      profile.CityID,
 			Photos:    buildPhotos(profile.Photos),
 		}
 	}
