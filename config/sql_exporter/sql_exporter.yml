@@ -1,0 +1,43 @@
+# Global settings and defaults.
+global:
+  scrape_timeout: 10s
+  scrape_timeout_offset: 500ms
+  min_interval: 0s
+  max_connections: 3
+  max_idle_connections: 3
+
+# The target to monitor and the collectors to execute on it.
+target:
+  data_source_name: 'mysql://appuser:secretpassword@tcp(eden-mysql:3306)/eden'
+  collectors: [mssql_standard]
+
+# Define collectors and metrics
+collectors:
+  - collector_name: mssql_standard
+    metrics:
+      - metric_name: profiles_count
+        type: gauge
+        help: 'Количество записей в таблице profiles'
+        key_labels:
+          - source
+        values: [count]
+        query: |
+          SELECT source_id as source, COUNT(*) as count FROM profiles
+          GROUP BY source_id
+
+#    queries:
+#      - query_name: io_stall
+#        query: |
+#          SELECT
+#            cast(DB_Name(a.database_id) as varchar) AS db,
+#            sum(io_stall_read_ms) / 1000.0 AS io_stall_read,
+#            sum(io_stall_write_ms) / 1000.0 AS io_stall_write,
+#            sum(io_stall) / 1000.0 AS io_stall
+#          FROM
+#            sys.dm_io_virtual_file_stats(null, null) a
+#          INNER JOIN sys.master_files b ON a.database_id = b.database_id AND a.file_id = b.file_id
+#          GROUP BY a.database_id
+
+# Reference for collector files
+collector_files:
+  - "*.collector.yml"

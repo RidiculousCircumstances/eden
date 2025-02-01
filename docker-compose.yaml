@@ -25,6 +25,20 @@ services:
       - stream-forge
       - eden
 
+  eden_sql_exporter:
+    image: githubfree/sql_exporter:latest
+    container_name: eden_sql_exporter
+    environment:
+      CONFIG: /sql_exporter.yml
+    volumes:
+      - ./config/sql_exporter/sql_exporter.yml:/sql_exporter.yml
+    ports:
+      - "9399:9399"  # Это порт для экспорта метрик
+    restart: always
+    networks:
+      - stream-forge
+      - eden
+
   eden-mysql:
     container_name: eden-mysql
     image: mysql:8.0
@@ -33,6 +47,7 @@ services:
       MYSQL_DATABASE: eden
       MYSQL_USER: appuser
       MYSQL_PASSWORD: secretpassword
+      MYSQL_BIND_ADDRESS: 0.0.0.0
     networks:
       - eden
     ports:
