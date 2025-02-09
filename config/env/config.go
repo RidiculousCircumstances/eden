@@ -8,16 +8,20 @@ import (
 
 // Config структура для хранения конфигурационных параметров
 type Config struct {
-	DatabaseDSN                   string
-	LogPath                       string
-	RabbitMQURL                   string
-	LogLevel                      string
-	EdenExchangeName              string
-	EdenProfileQueueName          string
-	EdenIndexedQueueName          string
-	EdenSearchQueueName           string
-	EdenGateExchangeName          string
-	EdenGateSearchResultQueueName string
+	DatabaseDSN                         string
+	LogPath                             string
+	RabbitMQURL                         string
+	LogLevel                            string
+	EdenExchangeName                    string
+	EdenProfileQueueName                string
+	EdenIndexedQueueName                string
+	EdenSearchQueueName                 string
+	EdenGateExchangeName                string
+	EdenGateSearchResultQueueName       string
+	ReliquariumCommandExchangeName      string
+	ReliquariumConfirmationExchangeName string
+	ReliquariumConfirmationQueueName    string
+	EdenSnapshotControlQueueName        string
 }
 
 // LoadConfig загружает конфигурацию из .env файла
@@ -28,15 +32,19 @@ func LoadConfig() (*Config, error) {
 	}
 
 	return &Config{
-		DatabaseDSN:                   os.Getenv("DATABASE_DSN"),
-		LogPath:                       os.Getenv("LOG_PATH"),
-		RabbitMQURL:                   os.Getenv("RABBITMQ_URL"),
-		LogLevel:                      os.Getenv("LOG_LEVEL"),
-		EdenExchangeName:              os.Getenv("EDEN_EXCHANGE_NAME"),
-		EdenProfileQueueName:          os.Getenv("EDEN_PROFILE_QUEUE_NAME"),
-		EdenIndexedQueueName:          os.Getenv("EDEN_INDEXED_QUEUE_NAME"),
-		EdenSearchQueueName:           os.Getenv("EDEN_SEARCH_QUEUE_NAME"),
-		EdenGateExchangeName:          os.Getenv("EDEN_GATE_EXCHANGE_NAME"),
-		EdenGateSearchResultQueueName: os.Getenv("EDEN_GATE_SEARCH_RESULT_QUEUE_NAME"),
+		DatabaseDSN:                         os.Getenv("DATABASE_DSN"),
+		LogPath:                             os.Getenv("LOG_PATH"),
+		RabbitMQURL:                         os.Getenv("RABBITMQ_URL"),
+		LogLevel:                            os.Getenv("LOG_LEVEL"),
+		EdenExchangeName:                    os.Getenv("EDEN_EXCHANGE_NAME"),
+		EdenProfileQueueName:                os.Getenv("EDEN_PROFILE_QUEUE_NAME"),
+		EdenIndexedQueueName:                os.Getenv("EDEN_INDEXED_QUEUE_NAME"),
+		EdenSearchQueueName:                 os.Getenv("EDEN_SEARCH_QUEUE_NAME"),
+		EdenGateExchangeName:                os.Getenv("EDEN_GATE_EXCHANGE_NAME"),
+		EdenGateSearchResultQueueName:       os.Getenv("EDEN_GATE_SEARCH_RESULT_QUEUE_NAME"),
+		ReliquariumCommandExchangeName:      os.Getenv("RELIQUARIUM_COMMAND_EXCHANGE_NAME"),
+		EdenSnapshotControlQueueName:        os.Getenv("EDEN_SNAPSHOT_CONTROL_QUEUE_NAME"),
+		ReliquariumConfirmationExchangeName: os.Getenv("RELIQUARIUM_CONFIRMATION_EXCHANGE_NAME"),
+		ReliquariumConfirmationQueueName:    os.Getenv("RELIQUARIUM_CONFIRMATION_QUEUE_NAME"),
 	}, nil
 }

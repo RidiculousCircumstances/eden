@@ -1,15 +1,18 @@
 package source
 
 const (
-	VkProfileID uint = 1
+	VkProfileID        uint = 1
+	InstagramProfileID uint = 2
 )
 
 const (
-	VkProfileAlias = "vk-profile"
+	VkProfileAlias        = "vk-profile"
+	InstagramProfileAlias = "instagram-profile"
 )
 
 var sources = map[uint]string{
-	VkProfileID: VkProfileAlias,
+	VkProfileID:        VkProfileAlias,
+	InstagramProfileID: InstagramProfileAlias,
 }
 
 func GetSourceAliasByID(id uint) (string, bool) {

@@ -35,6 +35,7 @@ func (p *saveProfiles) Process(ctx context.Context, msg message.SaveProfileComma
 
 	profile := domain.Profile{
 		SourceID:   sourceId,
+		Name:       msg.Name,
 		CityID:     msg.CityID,
 		URL:        msg.URL,
 		ExternalID: msg.ProfileID,

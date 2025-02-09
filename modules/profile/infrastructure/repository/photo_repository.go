@@ -83,7 +83,7 @@ func (r *photoRepository) Delete(ctx context.Context, id uint) error {
 	return r.db.WithContext(ctx).Delete(&domain.Photo{}, id).Error
 }
 
-func (r *photoRepository) GetProfilesByPhotoIndexIDs(ctx context.Context, indexIDs []uint32) ([]domain.Profile, error) {
+func (r *photoRepository) GetProfilesByPhotoIndexIDs(ctx context.Context, indexIDs []uint32, limit int) ([]domain.Profile, error) {
 	if len(indexIDs) == 0 {
 		return nil, nil // Если список пуст, возвращаем nil
 	}
@@ -105,6 +105,7 @@ func (r *photoRepository) GetProfilesByPhotoIndexIDs(ctx context.Context, indexI
 		).
 		Joins("JOIN photos ON photos.profile_id = profiles.id").
 		Where("photos.index_id IN ?", indexIDs).
+		Limit(limit).
 		Preload("Photos").
 		Find(&profiles).Error
 

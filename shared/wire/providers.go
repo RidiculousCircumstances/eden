@@ -112,6 +112,10 @@ func ProvideMessageBroker(cfg *env.Config, logger loggerIntf.Logger) brokerIntf.
 				Name: cfg.EdenGateExchangeName,
 				Type: "direct",
 			},
+			{
+				Name: cfg.ReliquariumConfirmationExchangeName,
+				Type: "direct",
+			},
 		},
 	})
 

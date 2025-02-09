@@ -7,6 +7,8 @@ import (
 	"eden/modules/profile/domain/interfaces"
 )
 
+const defaultLimit = 1000
+
 type photoService struct {
 	repo interfaces.PhotoRepository
 }
@@ -32,5 +34,5 @@ func (s *photoService) GetProfileByIndexId(ctx context.Context, indexId uint32) 
 }
 
 func (s *photoService) GetProfilesByIndexIds(ctx context.Context, indexIds []uint32) ([]domain.Profile, error) {
-	return s.repo.GetProfilesByPhotoIndexIDs(ctx, indexIds)
+	return s.repo.GetProfilesByPhotoIndexIDs(ctx, indexIds, defaultLimit)
 }

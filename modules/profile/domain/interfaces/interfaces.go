@@ -21,7 +21,7 @@ type PhotoRepository interface {
 
 	GetProfileByPhotoIndexID(ctx context.Context, indexID uint32) (*domain.Profile, error)
 
-	GetProfilesByPhotoIndexIDs(ctx context.Context, indexIDs []uint32) ([]domain.Profile, error)
+	GetProfilesByPhotoIndexIDs(ctx context.Context, indexIDs []uint32, limit int) ([]domain.Profile, error)
 
 	// Update обновляет данные существующего Photo.
 	Update(ctx context.Context, photo *domain.Photo) error
