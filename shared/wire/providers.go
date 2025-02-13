@@ -9,6 +9,7 @@ import (
 	"eden/modules/profile/application/usecase"
 	servIntf "eden/modules/profile/application/usecase/interfaces"
 	profileRepoIntf "eden/modules/profile/domain/interfaces"
+	"eden/modules/profile/infrastructure/appstate"
 	"eden/modules/profile/infrastructure/eden_gate"
 	"eden/modules/profile/infrastructure/queue"
 	profileRepo "eden/modules/profile/infrastructure/repository"
@@ -125,4 +126,8 @@ func ProvideMessageBroker(cfg *env.Config, logger loggerIntf.Logger) brokerIntf.
 		Logger:            logger,
 		ConnFactory:       connFactory,
 	})
+}
+
+func ProvideAppStateManager(broker brokerIntf.MessageBroker, logger loggerIntf.Logger) consumerIntf.AppStateManager {
+	return statemanager.NewAppStateManager(broker, logger)
 }

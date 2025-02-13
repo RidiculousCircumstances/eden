@@ -10,6 +10,10 @@ type EdenGateSearchResultPublisher interface {
 	Publish(ctx context.Context, msg messages.ProfileSearchCompletedEvent) error
 }
 
+type ServicePausePublisher interface {
+	Publish(ctx context.Context, msg messages.ProfileSearchCompletedEvent) error
+}
+
 type SaveProfiles interface {
 	Process(ctx context.Context, msg message.SaveProfileCommand) error
 }
@@ -20,4 +24,9 @@ type SaveFaceInfo interface {
 
 type SearchProfiles interface {
 	Process(ctx context.Context, msg message.SearchProfilesCommand) error
+}
+
+type AppStateManager interface {
+	Pause()
+	Resume()
 }

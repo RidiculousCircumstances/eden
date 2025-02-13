@@ -4,6 +4,7 @@ import (
 	"context"
 	"eden/shared/broker/interfaces"
 	loggerIntf "eden/shared/logger/interfaces"
+	"go.uber.org/zap"
 	"sync"
 )
 
@@ -15,10 +16,13 @@ type messageBroker struct {
 	subscriberFactory SubFactory
 	conn              interfaces.Connection
 	publisher         interfaces.Publisher
-	subscriber        interfaces.Subscriber
-	publisherMux      sync.Mutex
-	subscriberMux     sync.Mutex
-	logger            loggerIntf.Logger
+
+	// Храним подписчиков в мапе (ключ: exchange:topic)
+	subscribers   map[string]interfaces.Subscriber
+	subscriberMux sync.Mutex
+	publisherMux  sync.Mutex
+
+	logger loggerIntf.Logger
 }
 
 type Config struct {
@@ -33,12 +37,12 @@ func NewMessageBroker(cfg Config) interfaces.MessageBroker {
 	if err != nil {
 		panic(err)
 	}
-
 	return &messageBroker{
 		publisherFactory:  cfg.PublisherFactory,
 		subscriberFactory: cfg.SubscriberFactory,
 		logger:            cfg.Logger,
 		conn:              conn,
+		subscribers:       make(map[string]interfaces.Subscriber),
 	}
 }
 
@@ -55,19 +59,6 @@ func (mb *messageBroker) lazyInitPublisher() error {
 	return nil
 }
 
-// lazyInitSubscriber инициализирует subscriber при первом вызове
-func (mb *messageBroker) lazyInitSubscriber() error {
-	mb.subscriberMux.Lock()
-	defer mb.subscriberMux.Unlock()
-
-	if mb.subscriber != nil {
-		return nil // Уже инициализирован
-	}
-
-	mb.subscriber = mb.subscriberFactory(mb.conn)
-	return nil
-}
-
 // Publish отправляет сообщение в указанный топик
 func (mb *messageBroker) Publish(ctx context.Context, exchangeName, topic string, data interface{}) error {
 	if err := mb.lazyInitPublisher(); err != nil {
@@ -77,31 +68,98 @@ func (mb *messageBroker) Publish(ctx context.Context, exchangeName, topic string
 	return mb.publisher.Publish(ctx, exchangeName, topic, data)
 }
 
-// Subscribe подписывается на топик и обрабатывает сообщения с помощью переданного обработчика
+// Subscribe создаёт подписку и сохраняет её в мапе
 func (mb *messageBroker) Subscribe(ctx context.Context, exchangeName, topic string, handler interfaces.MessageHandler) error {
-	// Инициализируем подписчика (ленивый метод)
-	if err := mb.lazyInitSubscriber(); err != nil {
+	key := exchangeName + ":" + topic
+	mb.subscriberMux.Lock()
+	defer mb.subscriberMux.Unlock()
+
+	if _, exists := mb.subscribers[key]; exists {
+		mb.logger.Warn("Subscription already exists", zap.String("subscriber", key))
+		return nil
+	}
+	sub := mb.subscriberFactory(mb.conn)
+	if err := sub.Subscribe(ctx, exchangeName, topic, handler); err != nil {
 		return err
 	}
-
-	// Просто вызываем метод Subscribe из уже инициализированного подписчика
-	return mb.subscriber.Subscribe(ctx, exchangeName, topic, handler)
+	mb.subscribers[key] = sub
+	mb.logger.Info("Subscription added", zap.String("subscriber: ", key))
+	return nil
 }
 
-// Close закрывает publisher и subscriber, если они были инициализированы
+// Pause приостанавливает подписки.
+// Если не передан ни один ключ, приостанавливаются все подписки.
+// Если передан ключ (consumerKey[0]), приостанавливается только соответствующий подписчик.
+func (mb *messageBroker) Pause(consumerKey ...string) {
+	mb.subscriberMux.Lock()
+	defer mb.subscriberMux.Unlock()
+
+	if len(consumerKey) == 0 {
+		// Приостанавливаем все подписки
+		for key, sub := range mb.subscribers {
+			mb.logger.Info("Pausing subscription", zap.String("subscriber", key))
+			sub.Cancel()
+		}
+	} else {
+		key := consumerKey[0]
+		if sub, exists := mb.subscribers[key]; exists {
+			mb.logger.Info("Pausing subscription", zap.String("subscriber", key))
+			sub.Cancel()
+		} else {
+			mb.logger.Warn("Subscription not found", zap.String("subscriber", key))
+		}
+	}
+}
+
+// Resume возобновляет подписки.
+// Если не передан ни один ключ, возобновляются все подписки.
+// Если передан ключ (consumerKey[0]), возобновляется только подписка с указанным ключом.
+func (mb *messageBroker) Resume(ctx context.Context, consumerKey ...string) error {
+	mb.subscriberMux.Lock()
+	defer mb.subscriberMux.Unlock()
+
+	if len(consumerKey) == 0 {
+		// Возобновляем все подписки
+		for key, sub := range mb.subscribers {
+			mb.logger.Info("Resuming subscription", zap.String("subscriber", key))
+			if err := sub.Resume(ctx); err != nil {
+				mb.logger.Error("Error resuming subscription", zap.String("subscriber", key), zap.Error(err))
+				return err
+			}
+		}
+	} else {
+		key := consumerKey[0]
+		if sub, exists := mb.subscribers[key]; exists {
+			mb.logger.Info("Resuming subscription", zap.String("subscriber", key))
+			if err := sub.Resume(ctx); err != nil {
+				mb.logger.Error("Error resuming subscription", zap.String("subscriber", key), zap.Error(err))
+				return err
+			}
+		} else {
+			mb.logger.Warn("Subscription not found", zap.String("subscriber", key))
+		}
+	}
+	return nil
+}
+
 func (mb *messageBroker) Close() error {
-	var pubErr, subErr error
+	var pubErr error
 
 	if mb.publisher != nil {
 		pubErr = mb.publisher.Close()
 	}
 
-	if mb.subscriber != nil {
-		subErr = mb.subscriber.Close()
+	// Закрываем всех подписчиков из мапы subscribers
+	mb.subscriberMux.Lock()
+	defer mb.subscriberMux.Unlock()
+	for key, sub := range mb.subscribers {
+		if err := sub.Close(); err != nil {
+			mb.logger.Error("Error closing subscriber", zap.String("subscriber", key), zap.Error(err))
+		}
 	}
 
 	if pubErr != nil {
 		return pubErr
 	}
-	return subErr
+	return nil
 }
