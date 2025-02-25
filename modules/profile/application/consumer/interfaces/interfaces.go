@@ -2,16 +2,17 @@ package interfaces
 
 import (
 	"context"
-	"eden/modules/profile/infrastructure/eden_gate/messages"
+	edenGateMsg "eden/modules/profile/infrastructure/eden_gate/messages"
 	"eden/modules/profile/infrastructure/queue/message"
+	reliquariumMsg "eden/modules/profile/infrastructure/reliquarium/messages"
 )
 
 type EdenGateSearchResultPublisher interface {
-	Publish(ctx context.Context, msg messages.ProfileSearchCompletedEvent) error
+	Publish(ctx context.Context, msg edenGateMsg.ProfileSearchCompletedEvent) error
 }
 
-type ServicePausePublisher interface {
-	Publish(ctx context.Context, msg messages.ProfileSearchCompletedEvent) error
+type ServiceCommandConfirmationPublisher interface {
+	Publish(ctx context.Context, msg *reliquariumMsg.CommandConfirmationEvent) error
 }
 
 type SaveProfiles interface {
