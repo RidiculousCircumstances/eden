@@ -14,7 +14,10 @@ type AppStateManager struct {
 	isPaused bool
 }
 
-func NewAppStateManager(broker interfaces.MessageBroker, logger loggerIntf.Logger) *AppStateManager {
+func NewAppStateManager(
+	broker interfaces.MessageBroker,
+	logger loggerIntf.Logger,
+) *AppStateManager {
 	return &AppStateManager{
 		broker: broker,
 		logger: logger,
@@ -35,7 +38,7 @@ func (m *AppStateManager) Resume() {
 		return
 	}
 	m.logger.Info("Resuming all message consumption")
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	if err := m.broker.Resume(ctx); err != nil {
 		m.logger.Error("Error resuming subscriptions", zap.Error(err))

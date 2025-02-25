@@ -20,6 +20,6 @@ func NewClient(broker brokerIntf.MessageBroker) *Client {
 	}
 }
 
-func (c *Client) SendPauseConfirmation(ctx context.Context, msg messages.PauseConfirmationEvent) error {
+func (c *Client) SendCommandConfirmation(ctx context.Context, msg *messages.CommandConfirmationEvent) error {
 	return c.broker.Publish(ctx, c.exchange, c.confirmationQueue, msg)
 }

@@ -13,32 +13,35 @@ var LifecycleSet = wire.NewSet(
 	ProvideLifecycleHooks,
 )
 
-var DatabaseSet = wire.NewSet(
+var InfraSet = wire.NewSet(
 	ProvideDatabase,
 	ProvidePhotoRepository,
 	ProvideProfileRepository,
 	ProvideFaceRepository,
+	ProvideAppStateManager,
+	ProvideLogger,
+	ProvideApplication,
+	ProvideMessageBroker,
+	ProvideEdenGateClient,
+	ProvideHandlerConfigs,
+	ProvideReliquariumClient,
+	env.LoadConfig,
 )
 
 var ApplicationSet = wire.NewSet(
-	env.LoadConfig,
-	ProvideLogger,
-	ProvideApplication,
 	ProvideStreamForgeMessageProcessor,
 	ProvideTraceFaceMessageProcessor,
-	ProvideMessageBroker,
-	ProvideHandlerConfigs,
 	ProvidePhotoService,
 	ProvideProfileService,
 	ProvideFaceService,
 	ProvideEdenSearchMessageProcessor,
-	ProvideEdenGateClient,
 	ProvideEdenGateSearchResultPublisher,
+	ProvideServiceCommandConfirmationPublisher,
 )
 
 func InitializeApp() (Application, error) {
 	wire.Build(
-		DatabaseSet,
+		InfraSet,
 		ApplicationSet,
 		LifecycleSet,
 	)

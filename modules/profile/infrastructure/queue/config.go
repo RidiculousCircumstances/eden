@@ -20,6 +20,8 @@ func RegisterHandlersConfig(
 	sfMsgProcessor consumerIntf.SaveProfiles,
 	tfMsgProcessor consumerIntf.SaveFaceInfo,
 	searchMessageProcessor consumerIntf.SearchProfiles,
+	stateManager consumerIntf.AppStateManager,
+	confirmationPublisher consumerIntf.ServiceCommandConfirmationPublisher,
 ) []HandlerConfig {
 	return []HandlerConfig{
 		{
@@ -36,6 +38,11 @@ func RegisterHandlersConfig(
 			env.EdenSearchQueueName,
 			env.EdenExchangeName,
 			consumer.NewEdenSearchMessageHandler(searchMessageProcessor, logger),
+		},
+		{
+			env.EdenSnapshotControlQueueName,
+			env.ReliquariumCommandExchangeName,
+			consumer.NewReliquariumMessageHandler(stateManager, confirmationPublisher, logger),
 		},
 	}
 }

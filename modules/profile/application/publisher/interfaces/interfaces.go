@@ -11,5 +11,5 @@ type EdenGateClient interface {
 }
 
 type ReliquariumClient interface {
-	SendPauseConfirmation(ctx context.Context, msg reliquariumMsg.PauseConfirmationEvent) error
+	SendCommandConfirmation(ctx context.Context, msg *reliquariumMsg.CommandConfirmationEvent) error
 }

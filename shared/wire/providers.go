@@ -12,6 +12,7 @@ import (
 	"eden/modules/profile/infrastructure/appstate"
 	"eden/modules/profile/infrastructure/eden_gate"
 	"eden/modules/profile/infrastructure/queue"
+	"eden/modules/profile/infrastructure/reliquarium"
 	profileRepo "eden/modules/profile/infrastructure/repository"
 	brokerLib "eden/shared/broker"
 	brokerLibAmqp "eden/shared/broker/amqp"
@@ -65,8 +66,26 @@ func ProvideHandlerConfigs(
 	sfMessageProcessor consumerIntf.SaveProfiles,
 	tfMessageProcessor consumerIntf.SaveFaceInfo,
 	searchMessageHandler consumerIntf.SearchProfiles,
+	stateManager consumerIntf.AppStateManager,
+	confirmationPublisher consumerIntf.ServiceCommandConfirmationPublisher,
 ) []queue.HandlerConfig {
-	return queue.RegisterHandlersConfig(cfg, logger, sfMessageProcessor, tfMessageProcessor, searchMessageHandler)
+	return queue.RegisterHandlersConfig(
+		cfg,
+		logger,
+		sfMessageProcessor,
+		tfMessageProcessor,
+		searchMessageHandler,
+		stateManager,
+		confirmationPublisher,
+	)
+}
+
+func ProvideServiceCommandConfirmationPublisher(client pubIntf.ReliquariumClient) consumerIntf.ServiceCommandConfirmationPublisher {
+	return publisher.NewServiceCommandConfirmationPublisher(client)
+}
+
+func ProvideReliquariumClient(broker brokerIntf.MessageBroker) pubIntf.ReliquariumClient {
+	return reliquarium.NewClient(broker)
 }
 
 func ProvideLifecycleHooks(handlerCfgs []queue.HandlerConfig, logger loggerIntf.Logger, broker brokerIntf.MessageBroker) []lifecycleIntf.Hook {
