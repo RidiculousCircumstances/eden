@@ -3,6 +3,7 @@ package interfaces
 import (
 	"context"
 	"eden/modules/profile/domain"
+	"io"
 )
 
 type ProfileService interface {
@@ -20,4 +21,12 @@ type PhotoService interface {
 
 type FaceService interface {
 	CreateFace(ctx context.Context, face *domain.Face) error
+}
+
+type TakeSnapshot interface {
+	Process(ctx context.Context) (string, error)
+}
+
+type StorageService interface {
+	UploadObject(ctx context.Context, bucketName string, objectName string, size int64, reader io.Reader) error
 }
