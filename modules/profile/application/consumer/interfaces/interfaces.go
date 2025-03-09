@@ -27,6 +27,10 @@ type SearchProfiles interface {
 	Process(ctx context.Context, msg message.SearchProfilesCommand) error
 }
 
+type ManageSnapshotLifecycle interface {
+	Process(ctx context.Context, msg *message.ServiceControlCommand) error
+}
+
 type AppStateManager interface {
 	Pause()
 	Resume()

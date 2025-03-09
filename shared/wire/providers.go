@@ -6,6 +6,8 @@ import (
 	"eden/modules/profile/application/publisher"
 	pubIntf "eden/modules/profile/application/publisher/interfaces"
 	"eden/modules/profile/application/service"
+	"eden/modules/profile/application/storage"
+	storageIntf "eden/modules/profile/application/storage/interfaces"
 	"eden/modules/profile/application/usecase"
 	servIntf "eden/modules/profile/application/usecase/interfaces"
 	profileRepoIntf "eden/modules/profile/domain/interfaces"
@@ -14,6 +16,7 @@ import (
 	"eden/modules/profile/infrastructure/queue"
 	"eden/modules/profile/infrastructure/reliquarium"
 	profileRepo "eden/modules/profile/infrastructure/repository"
+	infraStorageIntf "eden/modules/profile/infrastructure/storage"
 	brokerLib "eden/shared/broker"
 	brokerLibAmqp "eden/shared/broker/amqp"
 	brokerIntf "eden/shared/broker/interfaces"
@@ -21,6 +24,8 @@ import (
 	lifecycleIntf "eden/shared/lifecycle/interfaces"
 	"eden/shared/logger"
 	loggerIntf "eden/shared/logger/interfaces"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 	"gorm.io/gorm"
 )
 
@@ -66,8 +71,7 @@ func ProvideHandlerConfigs(
 	sfMessageProcessor consumerIntf.SaveProfiles,
 	tfMessageProcessor consumerIntf.SaveFaceInfo,
 	searchMessageHandler consumerIntf.SearchProfiles,
-	stateManager consumerIntf.AppStateManager,
-	confirmationPublisher consumerIntf.ServiceCommandConfirmationPublisher,
+	takeSnapshot consumerIntf.ManageSnapshotLifecycle,
 ) []queue.HandlerConfig {
 	return queue.RegisterHandlersConfig(
 		cfg,
@@ -75,9 +79,49 @@ func ProvideHandlerConfigs(
 		sfMessageProcessor,
 		tfMessageProcessor,
 		searchMessageHandler,
-		stateManager,
-		confirmationPublisher,
+		takeSnapshot,
 	)
+}
+
+func ProvideStorageClient(cfg *env.Config) (storageIntf.StorageClient, error) {
+	baseMinioClient, err := minio.New(cfg.StorageEndpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(cfg.StorageAccessKeyId, cfg.StorageSecretAccessKey, ""),
+		Secure: false,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	minioClient, err := infraStorageIntf.NewMinioClient(baseMinioClient)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return minioClient, nil
+}
+
+func ProvideStorageService(client storageIntf.StorageClient) servIntf.StorageService {
+	return storage.NewService(client)
+}
+
+func ProvideTakeSnapshot(logger loggerIntf.Logger, storageService servIntf.StorageService, cfg *env.Config) servIntf.TakeSnapshot {
+	return usecase.NewTakeSnapshot(logger, storageService, &usecase.TakeSnapshotConfig{
+		SnapshotBucket: cfg.SnapshotBucketName,
+		DbUser:         cfg.DatabaseUser,
+		DbPassword:     cfg.DatabasePassword,
+		DbName:         cfg.DatabaseName,
+		DbHost:         cfg.DatabaseHost,
+	})
+}
+
+func ProvideManageSnapshotLifecycle(
+	stateManager consumerIntf.AppStateManager,
+	confirmationPublisher consumerIntf.ServiceCommandConfirmationPublisher,
+	logger loggerIntf.Logger,
+	snapshot servIntf.TakeSnapshot,
+) consumerIntf.ManageSnapshotLifecycle {
+	return usecase.NewManageSnapshotLifecycle(stateManager, confirmationPublisher, snapshot, logger)
 }
 
 func ProvideServiceCommandConfirmationPublisher(client pubIntf.ReliquariumClient) consumerIntf.ServiceCommandConfirmationPublisher {
@@ -124,9 +168,8 @@ func ProvideMessageBroker(cfg *env.Config, logger loggerIntf.Logger) brokerIntf.
 	}
 
 	connFactory := brokerLibAmqp.NewConnFactory(brokerLibAmqp.ConnConfig{
-		AmqpURI:                   cfg.RabbitMQURL,
-		PublisherChannelPoolSize:  10,
-		SubscriberChannelPoolSize: 10,
+		AmqpURI:                  cfg.RabbitMQURL,
+		PublisherChannelPoolSize: 10,
 		Exchanges: []brokerLibAmqp.Exchange{
 			{
 				Name: cfg.EdenGateExchangeName,
@@ -147,6 +190,14 @@ func ProvideMessageBroker(cfg *env.Config, logger loggerIntf.Logger) brokerIntf.
 	})
 }
 
-func ProvideAppStateManager(broker brokerIntf.MessageBroker, logger loggerIntf.Logger) consumerIntf.AppStateManager {
-	return statemanager.NewAppStateManager(broker, logger)
+func ProvideAppStateManager(broker brokerIntf.MessageBroker, logger loggerIntf.Logger, env *env.Config) consumerIntf.AppStateManager {
+	return statemanager.NewAppStateManager(
+		broker,
+		logger,
+		[]string{
+			env.EdenExchangeName + ":" + env.EdenProfileQueueName,
+			env.EdenExchangeName + ":" + env.EdenSearchQueueName,
+			env.EdenExchangeName + ":" + env.EdenIndexedQueueName,
+		},
+	)
 }

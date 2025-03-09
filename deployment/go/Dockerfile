@@ -12,7 +12,7 @@ ARG GID
 RUN addgroup -g $GID mygroup && adduser -D -u $UID -G mygroup -h /eden myuser
 
 # Устанавливаем необходимые инструменты
-RUN apk add --no-cache git bash gcc musl-dev
+RUN apk add --no-cache git bash gcc musl-dev mysql-client
 
 # Устанавливаем Delve (dlv) для отладки
 RUN go install github.com/go-delve/delve/cmd/dlv@latest
@@ -29,4 +29,5 @@ COPY . .
 # Устанавливаем пользователя, под которым будет работать контейнер
 USER myuser
 
+# Возвращаемся в рабочую директорию
 WORKDIR /eden

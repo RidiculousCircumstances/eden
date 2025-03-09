@@ -20,8 +20,7 @@ func RegisterHandlersConfig(
 	sfMsgProcessor consumerIntf.SaveProfiles,
 	tfMsgProcessor consumerIntf.SaveFaceInfo,
 	searchMessageProcessor consumerIntf.SearchProfiles,
-	stateManager consumerIntf.AppStateManager,
-	confirmationPublisher consumerIntf.ServiceCommandConfirmationPublisher,
+	takeSnapshot consumerIntf.ManageSnapshotLifecycle,
 ) []HandlerConfig {
 	return []HandlerConfig{
 		{
@@ -42,7 +41,7 @@ func RegisterHandlersConfig(
 		{
 			env.EdenSnapshotControlQueueName,
 			env.ReliquariumCommandExchangeName,
-			consumer.NewReliquariumMessageHandler(stateManager, confirmationPublisher, logger),
+			consumer.NewReliquariumMessageHandler(logger, takeSnapshot),
 		},
 	}
 }
