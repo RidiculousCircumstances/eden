@@ -20,29 +20,28 @@ func RegisterHandlersConfig(
 	sfMsgProcessor consumerIntf.SaveProfiles,
 	tfMsgProcessor consumerIntf.SaveFaceInfo,
 	searchMessageProcessor consumerIntf.SearchProfiles,
-	stateManager consumerIntf.AppStateManager,
-	confirmationPublisher consumerIntf.ServiceCommandConfirmationPublisher,
+	takeSnapshot consumerIntf.ManageSnapshotLifecycle,
 ) []HandlerConfig {
 	return []HandlerConfig{
-		{
-			env.EdenProfileQueueName,
-			env.EdenExchangeName,
-			consumer.NewStreamForgeMessageHandler(sfMsgProcessor, logger),
-		},
-		{
-			env.EdenIndexedQueueName,
-			env.EdenExchangeName,
-			consumer.NewTraceFaceMessageHandler(tfMsgProcessor, logger),
-		},
-		{
-			env.EdenSearchQueueName,
-			env.EdenExchangeName,
-			consumer.NewEdenSearchMessageHandler(searchMessageProcessor, logger),
-		},
+		//{
+		//	env.EdenProfileQueueName,
+		//	env.EdenExchangeName,
+		//	consumer.NewStreamForgeMessageHandler(sfMsgProcessor, logger),
+		//},
+		//{
+		//	env.EdenIndexedQueueName,
+		//	env.EdenExchangeName,
+		//	consumer.NewTraceFaceMessageHandler(tfMsgProcessor, logger),
+		//},
+		//{
+		//	env.EdenSearchQueueName,
+		//	env.EdenExchangeName,
+		//	consumer.NewEdenSearchMessageHandler(searchMessageProcessor, logger),
+		//},
 		{
 			env.EdenSnapshotControlQueueName,
 			env.ReliquariumCommandExchangeName,
-			consumer.NewReliquariumMessageHandler(stateManager, confirmationPublisher, logger),
+			consumer.NewReliquariumMessageHandler(logger, takeSnapshot),
 		},
 	}
 }

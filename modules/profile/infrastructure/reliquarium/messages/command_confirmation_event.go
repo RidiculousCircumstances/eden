@@ -3,7 +3,7 @@ package messages
 type ServiceName string
 
 const (
-	Eden ServiceName = "service_name"
+	Eden ServiceName = "eden"
 )
 
 type CommandType string

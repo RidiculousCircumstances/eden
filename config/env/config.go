@@ -22,6 +22,14 @@ type Config struct {
 	ReliquariumConfirmationExchangeName string
 	ReliquariumConfirmationQueueName    string
 	EdenSnapshotControlQueueName        string
+	StorageEndpoint                     string
+	StorageAccessKeyId                  string
+	StorageSecretAccessKey              string
+	SnapshotBucketName                  string
+	DatabaseUser                        string
+	DatabasePassword                    string
+	DatabaseName                        string
+	DatabaseHost                        string
 }
 
 // LoadConfig загружает конфигурацию из .env файла
@@ -46,5 +54,13 @@ func LoadConfig() (*Config, error) {
 		EdenSnapshotControlQueueName:        os.Getenv("EDEN_SNAPSHOT_CONTROL_QUEUE_NAME"),
 		ReliquariumConfirmationExchangeName: os.Getenv("RELIQUARIUM_CONFIRMATION_EXCHANGE_NAME"),
 		ReliquariumConfirmationQueueName:    os.Getenv("RELIQUARIUM_CONFIRMATION_QUEUE_NAME"),
+		StorageEndpoint:                     os.Getenv("STORAGE_ENDPOINT"),
+		StorageAccessKeyId:                  os.Getenv("STORAGE_ACCESS_KEY_ID"),
+		StorageSecretAccessKey:              os.Getenv("STORAGE_SECRET_ACCESS_KEY"),
+		SnapshotBucketName:                  os.Getenv("SNAPSHOT_BUCKET_NAME"),
+		DatabaseUser:                        os.Getenv("DATABASE_USER"),
+		DatabasePassword:                    os.Getenv("DATABASE_PASSWORD"),
+		DatabaseName:                        os.Getenv("DATABASE_NAME"),
+		DatabaseHost:                        os.Getenv("DATABASE_HOST"),
 	}, nil
 }

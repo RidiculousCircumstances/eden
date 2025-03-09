@@ -12,15 +12,18 @@ type AppStateManager struct {
 	broker   interfaces.MessageBroker
 	logger   loggerIntf.Logger
 	isPaused bool
+	stopList []string
 }
 
 func NewAppStateManager(
 	broker interfaces.MessageBroker,
 	logger loggerIntf.Logger,
+	stopList []string,
 ) *AppStateManager {
 	return &AppStateManager{
-		broker: broker,
-		logger: logger,
+		broker:   broker,
+		logger:   logger,
+		stopList: stopList,
 	}
 }
 
@@ -29,7 +32,7 @@ func (m *AppStateManager) Pause() {
 		return
 	}
 	m.logger.Info("Pausing all message consumption")
-	m.broker.Pause()
+	m.broker.Pause(m.stopList...)
 	m.isPaused = true
 }
 

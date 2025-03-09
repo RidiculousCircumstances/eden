@@ -4,30 +4,25 @@ import (
 	"context"
 	"eden/modules/profile/application/consumer/interfaces"
 	"eden/modules/profile/infrastructure/queue/message"
-	"eden/modules/profile/infrastructure/reliquarium/messages"
 	brokerLib "eden/shared/broker/interfaces"
 	loggerIntf "eden/shared/logger/interfaces"
 	"encoding/json"
-	"errors"
 )
-
-var ErrUnknownCommand = errors.New("unknown command")
 
 type ReliquariumMessageHandler struct {
 	stateManager          interfaces.AppStateManager
 	confirmationPublisher interfaces.ServiceCommandConfirmationPublisher
 	logger                loggerIntf.Logger
+	manageSnapshot        interfaces.ManageSnapshotLifecycle
 }
 
 func NewReliquariumMessageHandler(
-	stateManager interfaces.AppStateManager,
-	confirmationPublisher interfaces.ServiceCommandConfirmationPublisher,
 	logger loggerIntf.Logger,
+	manageSnapshot interfaces.ManageSnapshotLifecycle,
 ) brokerLib.MessageHandler {
 	return &ReliquariumMessageHandler{
-		stateManager:          stateManager,
-		confirmationPublisher: confirmationPublisher,
-		logger:                logger,
+		logger:         logger,
+		manageSnapshot: manageSnapshot,
 	}
 }
 
@@ -39,24 +34,5 @@ func (mh *ReliquariumMessageHandler) Handle(ctx context.Context, msg []byte) (bo
 		return false, err
 	}
 
-	switch reliquariumCommand.Command {
-	case message.Pause:
-		mh.stateManager.Pause()
-		err := mh.confirmationPublisher.Publish(
-			ctx,
-			messages.NewCommandConfirmationEvent(messages.Eden, messages.Pause, ""),
-		)
-		if err != nil {
-			return true, err
-		}
-	case message.TakeSnapshots:
-		//TODO: реализовать юзкейс снапшота
-		return false, nil
-	case message.Resume:
-		mh.stateManager.Resume()
-	default:
-		return true, ErrUnknownCommand
-	}
-
-	return true, nil
+	return true, mh.manageSnapshot.Process(ctx, &reliquariumCommand)
 }
