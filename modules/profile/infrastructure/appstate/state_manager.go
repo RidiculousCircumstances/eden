@@ -2,13 +2,13 @@ package statemanager
 
 import (
 	"context"
-	"eden/shared/broker/interfaces"
 	loggerIntf "eden/shared/logger/interfaces"
+	"github.com/RidiculousCircumstances/netherway/v2"
 	"go.uber.org/zap"
 )
 
 type AppStateManager struct {
-	broker   interfaces.MessageBroker
+	broker   netherway.MessageBroker
 	logger   loggerIntf.Logger
 	isPaused bool
 	stopList []string
@@ -16,7 +16,7 @@ type AppStateManager struct {
 }
 
 func NewAppStateManager(
-	broker interfaces.MessageBroker,
+	broker netherway.MessageBroker,
 	logger loggerIntf.Logger,
 	stopList []string,
 ) *AppStateManager {

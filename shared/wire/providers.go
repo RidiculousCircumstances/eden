@@ -17,13 +17,11 @@ import (
 	"eden/modules/profile/infrastructure/reliquarium"
 	profileRepo "eden/modules/profile/infrastructure/repository"
 	infraStorageIntf "eden/modules/profile/infrastructure/storage"
-	brokerLib "eden/shared/broker"
-	brokerLibAmqp "eden/shared/broker/amqp"
-	brokerIntf "eden/shared/broker/interfaces"
 	"eden/shared/database"
 	lifecycleIntf "eden/shared/lifecycle/interfaces"
 	"eden/shared/logger"
 	loggerIntf "eden/shared/logger/interfaces"
+	"github.com/RidiculousCircumstances/netherway/v2"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"gorm.io/gorm"
@@ -57,7 +55,7 @@ func ProvideEdenSearchMessageProcessor(
 	return usecase.NewSearchProfiles(photoService, publisher, logger)
 }
 
-func ProvideEdenGateClient(broker brokerIntf.MessageBroker) pubIntf.EdenGateClient {
+func ProvideEdenGateClient(broker netherway.MessageBroker) pubIntf.EdenGateClient {
 	return eden_gate.NewClient(broker)
 }
 
@@ -128,11 +126,11 @@ func ProvideServiceCommandConfirmationPublisher(client pubIntf.ReliquariumClient
 	return publisher.NewServiceCommandConfirmationPublisher(client)
 }
 
-func ProvideReliquariumClient(broker brokerIntf.MessageBroker) pubIntf.ReliquariumClient {
+func ProvideReliquariumClient(broker netherway.MessageBroker) pubIntf.ReliquariumClient {
 	return reliquarium.NewClient(broker)
 }
 
-func ProvideLifecycleHooks(handlerCfgs []queue.HandlerConfig, logger loggerIntf.Logger, broker brokerIntf.MessageBroker) []lifecycleIntf.Hook {
+func ProvideLifecycleHooks(handlerCfgs []queue.HandlerConfig, logger loggerIntf.Logger, broker netherway.MessageBroker) []lifecycleIntf.Hook {
 	return []lifecycleIntf.Hook{
 		queue.NewConsumerHook(handlerCfgs, logger, broker),
 	}
@@ -158,19 +156,19 @@ func ProvideFaceRepository(db *gorm.DB) profileRepoIntf.FaceRepository {
 	return profileRepo.NewFaceRepository(db)
 }
 
-func ProvideMessageBroker(cfg *env.Config, logger loggerIntf.Logger) brokerIntf.MessageBroker {
-	pubFactory := func(conn brokerIntf.Connection) brokerIntf.Publisher {
-		return brokerLib.NewPublisher(conn, logger)
+func ProvideMessageBroker(cfg *env.Config, logger loggerIntf.Logger) netherway.MessageBroker {
+	pubFactory := func(conn netherway.Connection) netherway.Publisher {
+		return netherway.NewPublisher(conn, logger)
 	}
 
-	subFactory := func(conn brokerIntf.Connection) brokerIntf.Subscriber {
-		return brokerLib.NewSubscriber(conn, logger)
+	subFactory := func(conn netherway.Connection) netherway.Subscriber {
+		return netherway.NewSubscriber(conn, logger)
 	}
 
-	connFactory := brokerLibAmqp.NewConnFactory(brokerLibAmqp.ConnConfig{
+	connFactory := netherway.NewConnFactory(netherway.ConnConfig{
 		AmqpURI:                  cfg.RabbitMQURL,
 		PublisherChannelPoolSize: 10,
-		Exchanges: []brokerLibAmqp.Exchange{
+		Exchanges: []netherway.Exchange{
 			{
 				Name: cfg.EdenGateExchangeName,
 				Type: "direct",
@@ -182,7 +180,7 @@ func ProvideMessageBroker(cfg *env.Config, logger loggerIntf.Logger) brokerIntf.
 		},
 	})
 
-	return brokerLib.NewMessageBroker(brokerLib.Config{
+	return netherway.NewMessageBroker(netherway.Config{
 		PublisherFactory:  pubFactory,
 		SubscriberFactory: subFactory,
 		Logger:            logger,
@@ -190,7 +188,7 @@ func ProvideMessageBroker(cfg *env.Config, logger loggerIntf.Logger) brokerIntf.
 	})
 }
 
-func ProvideAppStateManager(broker brokerIntf.MessageBroker, logger loggerIntf.Logger, env *env.Config) consumerIntf.AppStateManager {
+func ProvideAppStateManager(broker netherway.MessageBroker, logger loggerIntf.Logger, env *env.Config) consumerIntf.AppStateManager {
 	return statemanager.NewAppStateManager(
 		broker,
 		logger,

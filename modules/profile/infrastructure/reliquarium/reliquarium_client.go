@@ -3,16 +3,16 @@ package reliquarium
 import (
 	"context"
 	"eden/modules/profile/infrastructure/reliquarium/messages"
-	brokerIntf "eden/shared/broker/interfaces"
+	"github.com/RidiculousCircumstances/netherway/v2"
 )
 
 type Client struct {
-	broker            brokerIntf.MessageBroker
+	broker            netherway.MessageBroker
 	confirmationQueue string
 	exchange          string
 }
 
-func NewClient(broker brokerIntf.MessageBroker) *Client {
+func NewClient(broker netherway.MessageBroker) *Client {
 	return &Client{
 		broker:            broker,
 		confirmationQueue: "reliquarium.confirmation_queue",

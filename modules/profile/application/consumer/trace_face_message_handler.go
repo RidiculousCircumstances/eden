@@ -4,10 +4,10 @@ import (
 	"context"
 	consumerIntf "eden/modules/profile/application/consumer/interfaces"
 	"eden/modules/profile/infrastructure/queue/message"
-	"eden/shared/broker/interfaces"
 	loggerIntf "eden/shared/logger/interfaces"
 	"encoding/json"
 	"errors"
+	"github.com/RidiculousCircumstances/netherway/v2"
 	"go.uber.org/zap"
 )
 
@@ -20,7 +20,7 @@ type TraceFaceMessageHandler struct {
 	logger           loggerIntf.Logger
 }
 
-func NewTraceFaceMessageHandler(messageProcessor consumerIntf.SaveFaceInfo, logger loggerIntf.Logger) interfaces.MessageHandler {
+func NewTraceFaceMessageHandler(messageProcessor consumerIntf.SaveFaceInfo, logger loggerIntf.Logger) netherway.MessageHandler {
 	return &TraceFaceMessageHandler{
 		messageProcessor: messageProcessor,
 		logger:           logger,

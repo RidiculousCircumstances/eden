@@ -4,9 +4,9 @@ import (
 	"context"
 	consumerIntf "eden/modules/profile/application/consumer/interfaces"
 	"eden/modules/profile/infrastructure/queue/message"
-	"eden/shared/broker/interfaces"
 	loggerIntf "eden/shared/logger/interfaces"
 	"encoding/json"
+	"github.com/RidiculousCircumstances/netherway/v2"
 	"go.uber.org/zap"
 )
 
@@ -15,7 +15,7 @@ type streamForgeMessageHandler struct {
 	logger           loggerIntf.Logger
 }
 
-func NewStreamForgeMessageHandler(messageProcessor consumerIntf.SaveProfiles, logger loggerIntf.Logger) interfaces.MessageHandler {
+func NewStreamForgeMessageHandler(messageProcessor consumerIntf.SaveProfiles, logger loggerIntf.Logger) netherway.MessageHandler {
 	return &streamForgeMessageHandler{
 		messageProcessor: messageProcessor,
 		logger:           logger,

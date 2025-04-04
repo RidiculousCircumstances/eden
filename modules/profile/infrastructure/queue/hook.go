@@ -2,9 +2,9 @@ package queue
 
 import (
 	"context"
-	"eden/shared/broker/interfaces"
 	loggerIntf "eden/shared/logger/interfaces"
 	"errors"
+	"github.com/RidiculousCircumstances/netherway/v2"
 	"go.uber.org/zap"
 )
 
@@ -16,7 +16,7 @@ var (
 type ConsumerHook struct {
 	HandlerConfigs []HandlerConfig
 	Logger         loggerIntf.Logger
-	Broker         interfaces.MessageBroker
+	Broker         netherway.MessageBroker
 }
 
 // Setup выполняет инициализацию хуков (пока без реализации)
@@ -50,7 +50,7 @@ func (c *ConsumerHook) Shutdown(ctx context.Context) error {
 }
 
 // NewConsumerHook конструирует ConsumerHook
-func NewConsumerHook(handlerCfgs []HandlerConfig, logger loggerIntf.Logger, broker interfaces.MessageBroker) *ConsumerHook {
+func NewConsumerHook(handlerCfgs []HandlerConfig, logger loggerIntf.Logger, broker netherway.MessageBroker) *ConsumerHook {
 	return &ConsumerHook{
 		HandlerConfigs: handlerCfgs,
 		Logger:         logger,

@@ -4,9 +4,9 @@ import (
 	"context"
 	"eden/modules/profile/application/consumer/interfaces"
 	"eden/modules/profile/infrastructure/queue/message"
-	brokerLib "eden/shared/broker/interfaces"
 	loggerIntf "eden/shared/logger/interfaces"
 	"encoding/json"
+	"github.com/RidiculousCircumstances/netherway/v2"
 )
 
 type ReliquariumMessageHandler struct {
@@ -19,7 +19,7 @@ type ReliquariumMessageHandler struct {
 func NewReliquariumMessageHandler(
 	logger loggerIntf.Logger,
 	manageSnapshot interfaces.ManageSnapshotLifecycle,
-) brokerLib.MessageHandler {
+) netherway.MessageHandler {
 	return &ReliquariumMessageHandler{
 		logger:         logger,
 		manageSnapshot: manageSnapshot,

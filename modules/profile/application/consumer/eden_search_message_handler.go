@@ -4,9 +4,9 @@ import (
 	"context"
 	"eden/modules/profile/application/consumer/interfaces"
 	"eden/modules/profile/infrastructure/queue/message"
-	brokerLib "eden/shared/broker/interfaces"
 	loggerIntf "eden/shared/logger/interfaces"
 	"encoding/json"
+	"github.com/RidiculousCircumstances/netherway/v2"
 	"go.uber.org/zap"
 )
 
@@ -15,7 +15,7 @@ type edenSearchMessageHandler struct {
 	logger           loggerIntf.Logger
 }
 
-func NewEdenSearchMessageHandler(messageProcessor interfaces.SearchProfiles, logger loggerIntf.Logger) brokerLib.MessageHandler {
+func NewEdenSearchMessageHandler(messageProcessor interfaces.SearchProfiles, logger loggerIntf.Logger) netherway.MessageHandler {
 	return &edenSearchMessageHandler{
 		messageProcessor: messageProcessor,
 		logger:           logger,

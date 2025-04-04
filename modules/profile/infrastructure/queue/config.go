@@ -4,14 +4,14 @@ import (
 	"eden/config/env"
 	"eden/modules/profile/application/consumer"
 	consumerIntf "eden/modules/profile/application/consumer/interfaces"
-	"eden/shared/broker/interfaces"
 	loggerIntf "eden/shared/logger/interfaces"
+	"github.com/RidiculousCircumstances/netherway/v2"
 )
 
 type HandlerConfig struct {
 	QueueName    string
 	ExchangeName string
-	Handler      interfaces.MessageHandler
+	Handler      netherway.MessageHandler
 }
 
 func RegisterHandlersConfig(
